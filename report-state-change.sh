@@ -3,7 +3,7 @@
 # report a state change on a sensor
 #
 ##########################################
-source settings
+source settings_bash
 
 if [[ -z $1 ]]; then
 	echo "Missing sensor ID"

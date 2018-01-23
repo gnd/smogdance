@@ -19,7 +19,7 @@ import ConfigParser
 
 ### load config
 config = ConfigParser.ConfigParser()
-config.readfp(open(settings.conf))
+config.readfp(open('settings_python'))
 PARAMS = 7
 
 ### check if proper arguments

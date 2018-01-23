@@ -2,7 +2,7 @@
 #
 # runs all mrtg data collection
 ###############################
-source settings
+source settings_bash
 
 # Process all sensor mrtg's
 for CITY in `cat RUNLIST`; do

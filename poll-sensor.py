@@ -9,7 +9,7 @@ import ConfigParser
 
 ### load config
 config = ConfigParser.ConfigParser()
-config.readfp(open(settings.conf))
+config.readfp(open('settings_python'))
 
 args = 3 # $0, sensor_id, substance
 substances = ["co","no2","o3","pm10","pm25","so2"]

@@ -17,6 +17,9 @@ import subprocess
 import unicodedata
 import ConfigParser
 
+### load config
+config = ConfigParser.ConfigParser()
+config.readfp(open('settings_python'))
 
 def strip_accents(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s)
@@ -102,11 +105,6 @@ def write_mrtg_template(filename, workdir, template):
         f.write("WorkDir: %s\n\n" % (workdir))
     f.write(template)
     f.close()
-
-
-### load config
-config = ConfigParser.ConfigParser()
-config.readfp(open(settings.conf))
 
 ### initial checks
 if (len(sys.argv) < config.getint('globals', 'PARAMS')):

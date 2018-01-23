@@ -11,7 +11,7 @@ import ConfigParser
 
 ### load config
 config = ConfigParser.ConfigParser()
-config.readfp(open(settings.conf))
+config.readfp(open('settings_python'))
 
 ### connect to the db
 DB_HOST = config.getint('database', 'DB_HOST')

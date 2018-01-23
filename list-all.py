@@ -7,7 +7,7 @@ import ConfigParser
 
 ### load config
 config = ConfigParser.ConfigParser()
-config.readfp(open(settings.conf))
+config.readfp(open('settings_python'))
 
 thresholds = {}
 so2_thresholds = [0, 125, 350, 500, 800]			# http://ec.europa.eu/environment/air/quality/standards.htm

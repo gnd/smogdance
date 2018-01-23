@@ -1,0 +1,26 @@
+[database]
+DB_HOST =
+DB_NAME =
+DB_USER =
+DB_PASS =
+DB_TABLE =
+DATA_TABLE =
+
+[globals]
+# Number of columns for add-sensor.py
+PARAMS = 10
+
+# Main data dir
+DATA_DIR =
+
+# Main stats dir
+STATS_DIR =
+
+# Location of the spider template
+SPIDER_TEMPLATE = template.spider
+
+# Location of the MRTG template
+MRTG_TEMPLATE = template.mrtg
+
+# MRTG data retrieval
+SPIDER_COMMAND = poll-sensor.py

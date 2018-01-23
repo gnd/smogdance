@@ -1,0 +1,12 @@
+
+### SENSOR_DESC
+Target[MRTG_ID]: `RUN_COMMAND SPIDER_ID SUBSTANCE_NAME`
+MaxBytes[MRTG_ID]: MAXBYTES
+Title[MRTG_ID]: SENSOR_NAME
+PageTop[MRTG_ID]: <h1>SENSOR_NAME SUBSTANCE_DESC</h1>
+Unscaled[MRTG_ID]: ymwd
+ShortLegend[MRTG_ID]: uG / m^3
+YLegend[MRTG_ID]: uG / m^3
+LegendI[MRTG_ID]: SUBSTANCE_DESC in air
+LegendO[MRTG_ID]: SUBSTANCE_DESC in air
+Options[MRTG_ID]: integer, gauge, nopercent, growright, unknaszero

@@ -1,0 +1,5 @@
+DATA_DIR=""
+RUNLIST="$DATA_DIR/mrtg.runlist"
+
+REPORT_FROM=""
+REPORT_RECPS=""

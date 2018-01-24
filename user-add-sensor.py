@@ -11,8 +11,8 @@ import ConfigParser
 ### load config
 config = ConfigParser.ConfigParser()
 config.readfp(open('settings_python'))
+DATA_DIR = config.get('globals', 'DATA_DIR')
 
-DATA_DIR = config.getint('globals', 'DATA_DIR')
 name = raw_input("Sensor name:")
 link_src = raw_input("Sensor source link:")
 link_web = raw_input("Sensor web link:")

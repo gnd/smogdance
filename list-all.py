@@ -25,11 +25,11 @@ thresholds['no2'] = no2_thresholds
 
 
 ### connect to the db
-DB_HOST = config.getint('database', 'DB_HOST')
-DB_USER = config.getint('database', 'DB_USER')
-DB_PASS = config.getint('database', 'DB_PASS')
-DB_NAME = config.getint('database', 'DB_NAME')
-DB_TABLE = config.getint('database', 'DB_TABLE')
+DB_HOST = config.get('database', 'DB_HOST')
+DB_USER = config.get('database', 'DB_USER')
+DB_PASS = config.get('database', 'DB_PASS')
+DB_NAME = config.get('database', 'DB_NAME')
+DB_TABLE = config.get('database', 'DB_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 

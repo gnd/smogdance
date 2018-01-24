@@ -20,6 +20,12 @@ import ConfigParser
 ### load config
 config = ConfigParser.ConfigParser()
 config.readfp(open('settings_python'))
+DATA_DIR = config.get('globals', 'DATA_DIR')
+STATS_DIR = config.get('globals', 'STATS_DIR')
+SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
+MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
+SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
+SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
 
 def strip_accents(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s)
@@ -107,15 +113,15 @@ def write_mrtg_template(filename, workdir, template):
     f.close()
 
 ### initial checks
-if (len(sys.argv) < config.getint('globals', 'PARAMS')):
+if (len(sys.argv) < 10):
     sys.exit("Not enough parameters")
 
 ### connect to the db
-DB_HOST = config.getint('database', 'DB_HOST')
-DB_USER = config.getint('database', 'DB_USER')
-DB_PASS = config.getint('database', 'DB_PASS')
-DB_NAME = config.getint('database', 'DB_NAME')
-DB_TABLE = config.getint('database', 'DB_TABLE')
+DB_HOST = config.get('database', 'DB_HOST')
+DB_USER = config.get('database', 'DB_USER')
+DB_PASS = config.get('database', 'DB_PASS')
+DB_NAME = config.get('database', 'DB_NAME')
+DB_TABLE = config.get('database', 'DB_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
@@ -138,7 +144,7 @@ local_id = int(cur.fetchone()[0])
 
 ### execute query
 print "Inserting %s-%s into db" % (city, name)
-query = "INSERT INTO %s VALUES(0,'%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', now(), '%d', '%d', '%d')" % (DB_TABLE, local_id, name, link_src, link_web, link_stat, link_xpaths, country, city, gps, type, substances, 0, 0, 1)
+query = "INSERT INTO %s VALUES(0,'%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s', now(), %d, '%d', '%d')" % (DB_TABLE, local_id, name, link_src, link_web, link_stat, link_xpaths, country, city, gps, type, substances, 0, 0, 1)
 cur.execute(query)
 db.commit()
 id = int(cur.lastrowid)
@@ -146,12 +152,10 @@ db.close()
 
 city_dir = city.replace(" ", "_")
 ### check if the directories are created
-DATA_DIR = config.getint('globals', 'DATA_DIR')
-STATS_DIR = config.getint('globals', 'STATS_DIR')
-if (not os.path.isdir("%s/%s" % (DATA_DIR, country))):
-    os.makedirs("%s/%s" % (DATA_DIR, country))
-if (not os.path.isdir("%s/%s/%s" % (DATA_DIR, country, city_dir))):
-    os.makedirs("%s/%s/%s" % (DATA_DIR, country, city_dir))
+if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
+    os.makedirs("%s/%s" % (SPIDER_DIR, country))
+if (not os.path.isdir("%s/%s/%s" % (SPIDER_DIR, country, city_dir))):
+    os.makedirs("%s/%s/%s" % (SPIDER_DIR, country, city_dir))
 if (not os.path.isdir("%s/%s" % (STATS_DIR, country))):
     os.makedirs("%s/%s" % (STATS_DIR, country))
 if (not os.path.isdir("%s/%s/%s" % (STATS_DIR, country, city_dir))):
@@ -159,17 +163,15 @@ if (not os.path.isdir("%s/%s/%s" % (STATS_DIR, country, city_dir))):
 
 ### create new sensor spider on disk
 spider_name = local_id
-SPIDER_TEMPLATE = config.getint('globals', 'SPIDER_TMPLATE')
-spider_file = "%s/%s/%s/%s.py" % (DATA_DIR, country, city_dir, spider_name)
+spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
 template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, link_xpaths)
 write_template(spider_file, template)
 
 ### update mrtg for the city and substance
-MRTG_TEMPLATE = config.getint('globals', 'MRTG_TMPLATE')
 for substance in substances.split():
     mrtg_name = "%s.cfg" % (substance)
     mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, country, city_dir)
-    mrtg_file = "%s/%s/%s/%s" % (DATA_DIR, country, city_dir, mrtg_name)
+    mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
     template = fill_mrtg_template(MRTG_TEMPLATE, id, local_id, name, city, country, substance)
     write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
@@ -187,7 +189,7 @@ if (not "%s/%s\n" % (country, city_dir) in lines):
 
 ### check what substances we are already having for the city (if any)
 sensor_substances = substances.split()
-mrtg_workdir = "%s/%s/%s/" %(DATA_DIR, country, city_dir)
+mrtg_workdir = "%s/%s/%s/" %(SPIDER_DIR, country, city_dir)
 for file in os.listdir(mrtg_workdir):
     if file.endswith(".cfg"):
         if (file.replace(".cfg","") not in sensor_substances):
@@ -204,18 +206,21 @@ for substance in substances.split():
             else:
                 links += "<a href=%s.html>%s</a> " % (sub, sub.upper())
 
+    #//TODO - create prerequisities
+    #//TODO - add mrtg to prerequisities
     if (substance == 'pm10'):
-        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, country, city_dir, "index", city.capitalize(), substance.upper(), links, DATA_DIR, country, city_dir, substance)
+        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, country, city_dir, "index", city.capitalize(), substance.upper(), links, SPIDER_DIR, country, city_dir, substance)
     else:
-        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, country, city_dir, substance, city.capitalize(), substance.upper(), links, DATA_DIR, country, city_dir, substance)
+        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, country, city_dir, substance, city.capitalize(), substance.upper(), links, SPIDER_DIR, country, city_dir, substance)
 
     command_args = shlex.split(command)
     ### run indexmaker
     try:
         process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out = process.communicate()
-    except:
-        # dont be lazy gnd
+    except subprocess.CalledProcessError as e:
+        print e
+        out = "UGH"
         pass
 
     ### if non-zero return, we have a problem

@@ -7,14 +7,23 @@ DB_TABLE =
 DATA_TABLE =
 
 [globals]
-# Number of columns for add-sensor.py
-PARAMS = 10
+# Scrapy binary location
+SCRAPY_BIN =
 
 # Main data dir
 DATA_DIR =
 
+# Main spider dir
+SPIDER_DIR =
+
+# Spider definitions dir
+DEFINITIONS_DIR =
+
 # Main stats dir
 STATS_DIR =
+
+# Temp dir
+TEMP_DIR =
 
 # Location of the spider template
 SPIDER_TEMPLATE = template.spider

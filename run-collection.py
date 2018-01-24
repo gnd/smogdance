@@ -12,20 +12,22 @@ import ConfigParser
 ### load config
 config = ConfigParser.ConfigParser()
 config.readfp(open('settings_python'))
+SCRAPY_BIN = config.get('globals', 'SCRAPY_BIN')
+DATA_DIR = config.get('globals', 'DATA_DIR')
+SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 
 ### connect to the db
-DB_HOST = config.getint('database', 'DB_HOST')
-DB_USER = config.getint('database', 'DB_USER')
-DB_PASS = config.getint('database', 'DB_PASS')
-DB_NAME = config.getint('database', 'DB_NAME')
-DB_TABLE = config.getint('database', 'DB_TABLE')
+DB_HOST = config.get('database', 'DB_HOST')
+DB_USER = config.get('database', 'DB_USER')
+DB_PASS = config.get('database', 'DB_PASS')
+DB_NAME = config.get('database', 'DB_NAME')
+DB_TABLE = config.get('database', 'DB_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
 #####
 ##### Run special sensors (bulk collection & etc)
 #####
-DATA_DIR = config.getint('globals', 'DATA_DIR')
 special_sensors = []
 ### add special sensors
 query = "SELECT id, name, country, city, last_state FROM %s where active = 1 and type = 'bulk' and last_run < (now() - INTERVAL 30 minute)" % (DB_TABLE)
@@ -43,7 +45,7 @@ else:
         sensor_country = sensor[2]
         sensor_city = sensor[3]
         sensor_last_state = sensor[4]
-        sensor_cmd = "%s runspider %s/%s/special-%s.py --nolog -o - -t csv" % ("/usr/local/bin/scrapy", DATA_DIR, sensor_country, sensor_name)
+        sensor_cmd = "%s runspider %s/%s/special-%s.py --nolog -o - -t csv" % (SCRAPY_BIN, SPIDER_DIR, sensor_country, sensor_name)
         spider_args = shlex.split(sensor_cmd)
 
         ### run the spider
@@ -53,6 +55,8 @@ else:
             process = subprocess.Popen(spider_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out = process.communicate()
         except:
+            print "Couldnt run special sensor %s/special-%s" % (sensor_country, sensor_name)
+            out = "SPECIAL SENSOR FAILED"
             # dont be lazy gnd
             pass
 
@@ -103,7 +107,6 @@ else:
             db.commit()
 
 
-
 #####
 ##### Run normal sensors
 #####
@@ -126,7 +129,7 @@ for sensor in sensors:
     sensor_city = sensor[3]
     sensor_last_state = sensor[4]
     sensor_substances = sensor[5].split()
-    sensor_cmd = "%s runspider %s/%s/%s/%d.py --nolog -o - -t csv" % ("/usr/local/bin/scrapy", DATA_DIR, sensor_country, sensor_city.replace(" ","_"), sensor_local_id)
+    sensor_cmd = "%s runspider %s/%s/%s/%d.py --nolog -o - -t csv" % (SCRAPY_BIN, SPIDER_DIR, sensor_country, sensor_city.replace(" ","_"), sensor_local_id)
     spider_args = shlex.split(sensor_cmd)
 
     ### run the spider
@@ -136,6 +139,8 @@ for sensor in sensors:
         process = subprocess.Popen(spider_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out = process.communicate()
     except:
+        print "Couldnt run sensor %s/special-%s" % (sensor_country, sensor_name)
+        out = "Sensor failed"
         # dont be lazy gnd
         pass
 

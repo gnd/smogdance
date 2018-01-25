@@ -1,8 +1,16 @@
-#!/usr/bin/python
-#
-# polls SQL for the latest values of sensor data
-# to be used by mrtg
-################################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This polls SQL for the latest values of sensor data to be used by mrtg.
+
+    gnd, 2017 - 2018
+"""
+
 import sys
 import MySQLdb
 import ConfigParser

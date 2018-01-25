@@ -1,7 +1,23 @@
-#!/usr/bin/python
-#
-# runs collection on all sensors
-################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This runs data collection on all sensors.
+
+    In particular it:
+    - runs active special sensors as first (sensor type = bulk), every 30 minutes
+    - then runs the rest of the active sensors every 10 minutes
+    - readings are stored into the db
+    - if a gives wrong output, it is marked as problematic, if on the next readings
+    the problem repeats the sensor is made inactive and a notification mail is sent.
+
+    gnd, 2017 - 2018
+"""
+
 import os
 import sys
 import shlex

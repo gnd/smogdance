@@ -1,14 +1,22 @@
-#!/usr/bin/python
-#
-# This creates a new sensor. In particular it:
-#   - adds a special sensor defition to the database
-#   - adds spiderfile to disk
-#
-# Note:
-# A special sensor is eg. a sensor that just downloads a bigger
-# chunk of data for later processing, by 'normal' sensors,
-# such as chmi or shmu pages, thus saving total requests sent
-####################################################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This creates a new special sensor. In particular it:
+    - adds a special sensor defition to the database
+    - adds spiderfile to disk
+
+    Note:
+    A special sensor is eg. a sensor that just downloads a bigger
+    chunk of data for later processing, by 'normal' sensors,
+    such as chmi or shmu pages, thus saving total requests sent
+
+    gnd, 2017 - 2018
+"""
 
 import os
 import sys

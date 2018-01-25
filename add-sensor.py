@@ -1,11 +1,19 @@
-#!/usr/bin/python
-#
-# This creates a new sensor. In particular it:
-#   - adds a sensor definition to the database
-#   - creates a spiderfile from a template and adds it to disk
-#   - creates or updates a mrtg config for sensor and its substances
-#   - updates mrtg index for the given city and substance
-####################################################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This creates a new sensor. In particular it:
+   - adds a sensor definition to the database
+   - creates a spiderfile from a template and adds it to disk
+   - creates or updates a mrtg config for the sensor and its substances
+   - updates mrtg index for the given city and substances
+
+   gnd, 2017 - 2018
+"""
 
 import os
 import sys

@@ -1,17 +1,29 @@
-#!/usr/bin/python
-#
-#
-#################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This is so far a pretty primitive script that outputs a simple HTML list of all
+    collected sensors and their current ait quality readings trying to color code
+    the amounts of substances detected according to the EC's air quality standards.
+
+    gnd, 2017 - 2018
+"""
+
 import MySQLdb
 import ConfigParser
 
 ### load config
 config = ConfigParser.ConfigParser()
 config.readfp(open('settings_python'))
+STATS_URL = config.get('globals', 'STATS_URL')
 
 thresholds = {}
 so2_thresholds = [0, 125, 350, 500, 800]			# http://ec.europa.eu/environment/air/quality/standards.htm
-o3_thresholds = [0, 50	, 100, 150, 200, 300]		# saved in smogdance local
+o3_thresholds = [0, 50, 100, 150, 200, 300]         # saved in smogdance local
 pm10_thresholds = [0, 55, 155, 255, 355]            # ??
 pm25_thresholds = [0, 15, 40, 65, 150]              # ??
 co_thresholds = [0, 10000, 20000, 30000, 40000]		# http://ec.europa.eu/environment/air/quality/standards.htm
@@ -59,7 +71,7 @@ print "<br/><br/>"
 
 for country in countries:
     print "<a name=\"%s\"></a>" % (country)
-    print "<a href=https://stats.smog.dance/%s>%s</a><br/>" % (country, country.upper())
+    print "<a href=https://%s/%s>%s</a><br/>" % (STATS_URL, country, country.upper())
     print "<table>"
     print "<tr><td width=\"140\">&nbsp;</td><td width=\"35\">co</td><td width=\"20\">no2</td><td width=\"20\">o3</td><td width=\"20\">pm10</td><td width=\"20\">pm25</td><td width=\"20\">so2</td><tr>\n"
     query = "SELECT DISTINCT city, link_stat FROM %s WHERE country = '%s' AND city not like '' ORDER by city" % (DB_TABLE, country)

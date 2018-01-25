@@ -1,8 +1,16 @@
-#!/usr/bin/python
-#
-# smog dance installer script
-#
-############################################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This is a installer script, that walks the user through smogdance setup.
+    It also imports all known and working sensor definitions into the database.
+
+    gnd, 2017 - 2018
+"""
 
 import os
 import sys
@@ -58,6 +66,7 @@ config.set('globals', 'SPIDER_DIR', spider_dir)
 config.set('globals', 'DEFINITIONS_DIR', definitions_dir)
 config.set('globals', 'STATS_DIR', stats_dir)
 config.set('globals', 'TEMP_DIR', temp_dir)
+config.set('globals', 'STATS_URL', stats_url)
 config.set('globals', 'SPIDER_TEMPLATE', 'template.spider')
 config.set('globals', 'MRTG_TEMPLATE', 'template.mrtg')
 config.set('globals', 'SPIDER_COMMAND', 'poll-sensor.py')

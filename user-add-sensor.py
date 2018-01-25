@@ -1,8 +1,18 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
-# walks the user through a sensor creation
-##########################################
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+
+""" Smogdance
+
+    An open-source collection of scripts to collect, store and graph air quality data
+    from publicly available sources.
+
+    This walks the user through a new sensor creation. This is good for adding
+    single sensors, or creating a template that can be copied and edited
+    to add dozens of sensors at once.
+
+    gnd, 2017 - 2018
+"""
+
 import os
 import sys
 import pickle

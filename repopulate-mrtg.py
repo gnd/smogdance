@@ -117,7 +117,7 @@ for row in cur.fetchall():
 
         # now reverse and write the array to the logfile
         log_array.reverse()
-        mrtg_logfile = "%s/%s/%s/%s-%d_%s.log" % (STATS_DIR,sensor_country,sensor_city,sensor_city,sensor_local_id,substance)
+        mrtg_logfile = "%s/%s/%s/%s-%d_%s.log" % (STATS_DIR,sensor_country,city_dir,city_dir,sensor_local_id,substance)
         f = file(mrtg_logfile, 'w')
         for logline in log_array:
             f.write(logline)

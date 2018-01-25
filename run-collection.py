@@ -38,6 +38,7 @@ DB_USER = config.get('database', 'DB_USER')
 DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DB_TABLE = config.get('database', 'DB_TABLE')
+DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
@@ -179,14 +180,23 @@ for sensor in sensors:
 
     ### or store the data in the database
     else:
-        print "storing values for " + str(sensor_id)
         substance_names = ','.join(sensor_substances)
         substance_values = ','.join(out[0].replace(",",".").split())
         substance_values = substance_values.replace("None", "NULL")
         substance_values = substance_values.replace("**", "NULL")
         substance_values = substance_values.replace("*", "NULL")
-        query = "INSERT INTO sensor_data (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (substance_names, sensor_id, substance_values)
+        # temp data table keeping just the last record for every sensor
+        update_string = ""
+        temp_values = substance_values.replace("NULL","0").split(",")
+        for i in range(len(sensor_substances)):
+            update_string += sensor_substances[i] + "=\"" + temp_values[i]+ "\", "
+        query = "UPDATE %s_temp SET % stimestamp = now() WHERE sensor_id = %d" % (DATA_TABLE, update_string, sensor_id)
+        print "storing values for %d into %s_temp" % (sensor_id, DATA_TABLE)
         print query
+        cur.execute(query)
+        # long term storage
+        query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE, substance_names, sensor_id, substance_values)
+        print "storing values for %d into %s" % (sensor_id, DATA_TABLE)
         cur.execute(query)
 
         ### set last state and last_run

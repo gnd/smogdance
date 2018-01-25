@@ -113,6 +113,7 @@ if not db_err:
         db.close()
 
     if db_empty:
+        ## create the sensor table
         query = ("CREATE TABLE %s ("
         "id int AUTO_INCREMENT PRIMARY KEY, "
         "local_id int, "
@@ -138,6 +139,7 @@ if not db_err:
             print "Creating table %s failed: %s" % (db_table, e)
             table_err = True
 
+        ## create the sensor data table
         query = ("CREATE TABLE %s ("
         "sensor_id int, "
         "timestamp timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, "
@@ -153,6 +155,24 @@ if not db_err:
             cur.execute(query)
         except (MySQLdb.Error, MySQLdb.Warning) as e:
             print "Creating table %s failed: %s" % (data_table, e)
+            table_err = True
+
+        ## create the temporary sensor data table
+        query = ("CREATE TABLE %s_temp ("
+        "sensor_id int, "
+        "timestamp timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, "
+        "co float, "
+        "no2 float, "
+        "o3 float, "
+        "pm10 float, "
+        "pm25 float, "
+        "so2 float"
+        ")" % (data_table))
+        print "Creating table %s_temp: %s" % (data_table, query)
+        try:
+            cur.execute(query)
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            print "Creating table %s_temp failed: %s" % (data_table, e)
             table_err = True
 
         if not table_err:

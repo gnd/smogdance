@@ -46,8 +46,7 @@ db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
 ### get last data for the sensor
-query = "SELECT %s from %s WHERE sensor_id = %d ORDER BY timestamp DESC LIMIT 1" % (substance, DATA_TABLE, sensor_id)
-#print query
+query = "SELECT %s from %s_temp WHERE sensor_id = %d" % (substance, DATA_TABLE, sensor_id)
 try:
     cur.execute(query)
 except:

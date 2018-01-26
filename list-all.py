@@ -13,6 +13,7 @@
     gnd, 2017 - 2018
 """
 
+import os
 import MySQLdb
 import ConfigParser
 

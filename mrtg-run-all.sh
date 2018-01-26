@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # runs all mrtg data collection
 ###############################

@@ -14,6 +14,7 @@
 """
 
 import os
+import sys
 import MySQLdb
 import ConfigParser
 

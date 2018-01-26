@@ -42,6 +42,7 @@ DB_USER = config.get('database', 'DB_USER')
 DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DB_TABLE = config.get('database', 'DB_TABLE')
+DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
@@ -76,6 +77,7 @@ for country in countries:
     print "<tr><td width=\"140\">&nbsp;</td><td width=\"35\">co</td><td width=\"20\">no2</td><td width=\"20\">o3</td><td width=\"20\">pm10</td><td width=\"20\">pm25</td><td width=\"20\">so2</td><tr>\n"
     query = "SELECT DISTINCT city, link_stat FROM %s WHERE country = '%s' AND city not like '' ORDER by city" % (DB_TABLE, country)
     cur.execute(query)
+    #//TODO - rewrite this with poll-city instead
     for res in cur.fetchall():
         city = res[0]
         link = res[1]
@@ -95,7 +97,7 @@ for country in countries:
         sensors_so2 = 0
         for id in cur.fetchall():
             id = id[0]
-            query = "SELECT * from %s WHERE sensor_id = %s order by timestamp desc limit 1" % (DATA_TABLE, id)
+            query = "SELECT * from %s_temp WHERE sensor_id = %s" % (DATA_TABLE, id)
             cur.execute(query)
             co = 0
             no2 = 0

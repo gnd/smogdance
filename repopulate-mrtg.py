@@ -21,8 +21,9 @@ import subprocess
 import ConfigParser
 
 ### load config
+settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
-config.readfp(open('settings_python'))
+config.readfp(open(settings_file))
 STATS_DIR = config.get('globals', 'STATS_DIR')
 
 ### connect to the db

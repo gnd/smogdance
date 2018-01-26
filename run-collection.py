@@ -26,8 +26,9 @@ import subprocess
 import ConfigParser
 
 ### load config
+settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
-config.readfp(open('settings_python'))
+config.readfp(open(settings_file))
 SCRAPY_BIN = config.get('globals', 'SCRAPY_BIN')
 DATA_DIR = config.get('globals', 'DATA_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')

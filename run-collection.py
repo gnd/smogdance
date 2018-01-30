@@ -130,7 +130,7 @@ else:
 #####
 
 sensors = []
-query = "SELECT id, local_id, country, city, last_state, substances FROM %s where active = 1 and type = 'hourly' and last_run < (now() - INTERVAL 10 minute)" % (DB_TABLE)
+query = "SELECT id, local_id, country, city, last_state, substances, type FROM %s where active = 1 and (type = 'hourly' or type ='hourly-tor') and last_run < (now() - INTERVAL 10 minute)" % (DB_TABLE)
 cur.execute(query)
 for row in cur.fetchall():
     sensors.append(row)
@@ -147,7 +147,11 @@ for sensor in sensors:
     sensor_city = sensor[3]
     sensor_last_state = sensor[4]
     sensor_substances = sensor[5].split()
-    sensor_cmd = "%s runspider %s/%s/%s/%d.py --nolog -o - -t csv" % (SCRAPY_BIN, SPIDER_DIR, sensor_country, sensor_city.replace(" ","_"), sensor_local_id)
+    sensor_type = sensor[6]
+    if (sensor_type == 'hourly'):
+        sensor_cmd = "%s runspider %s/%s/%s/%d.py --nolog -o - -t csv" % (SCRAPY_BIN, SPIDER_DIR, sensor_country, sensor_city.replace(" ","_"), sensor_local_id)
+    if (sensor_type == 'hourly-tor'):
+        sensor_cmd = "torify %s runspider %s/%s/%s/%d.py --nolog -o - -t csv" % (SCRAPY_BIN, SPIDER_DIR, sensor_country, sensor_city.replace(" ","_"), sensor_local_id)
     spider_args = shlex.split(sensor_cmd)
 
     ### run the spider

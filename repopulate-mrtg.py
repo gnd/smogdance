@@ -36,10 +36,19 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
+### check input TODO (sanitize like in poll-city)
+city = ""
+if (len(sys.argv) > 1):
+    city = sys.argv[1]
+
 #####
 ##### Reconstruct MRTG logfiles from scratch
 #####
-query = "SELECT id, local_id, country, city, substances FROM %s where type = 'hourly'" % (DB_TABLE)
+if (city != ""):
+    query = "SELECT id, local_id, country, city, substances FROM %s where type = 'hourly' and city = '%s'" % (DB_TABLE, city)
+else:
+    query = "SELECT id, local_id, country, city, substances FROM %s where type = 'hourly'" % (DB_TABLE)
+print query
 cur.execute(query)
 for row in cur.fetchall():
     sensor_id = row[0]

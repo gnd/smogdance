@@ -48,7 +48,6 @@ if (city != ""):
     query = "SELECT id, local_id, country, city, substances FROM %s where type = 'hourly' and city = '%s'" % (DB_TABLE, city)
 else:
     query = "SELECT id, local_id, country, city, substances FROM %s where type = 'hourly'" % (DB_TABLE)
-print query
 cur.execute(query)
 for row in cur.fetchall():
     sensor_id = row[0]

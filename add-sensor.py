@@ -98,15 +98,15 @@ def fill_mrtg_template(template, id, local_id, name, city, country, substance):
     res = res.replace("MRTG_ID", mrtg_id)
     res = res.replace("SPIDER_ID", str(id))
     maxbytes = 200
-    absbytes = 300
+    absmax = 300
     if (substance == "pm10"):
         maxbytes = 160
-        absbytes = 500
+        absmax = 500
     if (substance == "co"):
         maxbytes = 3000
-        absbytes = 5000
+        absmax = 5000
     res = res.replace("MAXBYTES", str(maxbytes))
-    res = res.replace("ABSBYTES", str(maxbytes))
+    res = res.replace("ABSMAX", str(absmax))
     return res
 
 

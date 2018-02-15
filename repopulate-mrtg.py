@@ -89,7 +89,7 @@ for row in cur.fetchall():
                     count = (timestamp / 300) + 1
                     timestamp = count * 300
                 else:
-                    count = time_diff / 300
+                    count = (timestamp / 300)
                     timestamp = count * 300
                 # append to log_array
                 log_array.append("%s %d %d %d %d\n" % (timestamp, substance_value, substance_value, substance_value, substance_value))

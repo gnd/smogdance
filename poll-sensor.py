@@ -58,8 +58,11 @@ data = cur.fetchone()
 db.close()
 
 ### print for mrtg
-if (data[0] is not None):
-    data = data[0]
-    print "%d\n%d\n%d\n%d" % (int(data), int(data), int(data), int(data))
+if (data):
+    if (data[0] is not None):
+        data = data[0]
+        print "%d\n%d\n%d\n%d" % (int(data), int(data), int(data), int(data))
+    else:
+        sys.exit("No data")
 else:
     sys.exit("No data")

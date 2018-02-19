@@ -160,6 +160,8 @@ if (num_sensors > 0):
     cur.execute(query)
     # we make this grow monotonicaly so we avoid conflicts in the mrtg config files
     local_id = int(cur.fetchone()[0]) + 1
+else:
+    local_id = 0
 
 ### execute query
 print "Inserting %s-%s into db" % (city, name)

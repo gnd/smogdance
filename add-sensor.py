@@ -154,7 +154,12 @@ substances = sys.argv[10]
 ### get sensor id
 query = "SELECT count(*) as count from %s WHERE city = '%s'" % (DB_TABLE, city)
 cur.execute(query)
-local_id = int(cur.fetchone()[0])
+num_sensors = int(cur.fetchone()[0])
+if (num_sensors > 0):
+    query = "SELECT local_id FROM %s WHERE city = '%s' ORDER BY local_id DESC LIMIT 1" % (DB_TABLE, city)
+    cur.execute(query)
+    # we make this grow monotonicaly so we avoid conflicts in the mrtg config files
+    local_id = int(cur.fetchone()[0]) + 1
 
 ### execute query
 print "Inserting %s-%s into db" % (city, name)

@@ -135,6 +135,7 @@ DB_USER = config.get('database', 'DB_USER')
 DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DB_TABLE = config.get('database', 'DB_TABLE')
+DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 

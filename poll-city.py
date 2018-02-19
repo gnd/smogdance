@@ -15,7 +15,6 @@ import os
 import sys
 import MySQLdb
 import ConfigParser
-#//TODO - add tabulate into dependencies
 from tabulate import tabulate
 
 ### load config
@@ -24,8 +23,8 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 
 args = 2 # $0, sensor_id
+all_substances = ["co","no2","o3","pm10","pm25","so2"]
 #//TODO - allow for single substance selection (like in poll-sensor)
-#substances = ["co","no2","o3","pm10","pm25","so2", "all"]
 
 ### check if proper arguments
 if (len(sys.argv) < args):
@@ -48,31 +47,36 @@ db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
 ### get list of sensors for the city
-query = "SELECT id, name from %s WHERE city = \"%s\"" % (DB_TABLE, city)
+query = "SELECT id, name, substances from %s WHERE city = \"%s\"" % (DB_TABLE, city)
 try:
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
 
 table = []
-table.append(["city","name","co","no2","o3","pm10","pm25","so2"])
+table.append(["city","name"] + all_substances)
 ### get last data for the sensors
 for line in cur.fetchall():
-    print line
     row = []
     sensor_id = line[0]
     name = line[1]
+    sensor_substances = line[2]
     row.append(city)
     row.append(name)
-    query = "SELECT co, no2, o3, pm10, pm25, so2 from %s_temp WHERE sensor_id = %d" % (DATA_TABLE, sensor_id)
-    print query
+    query_substances = ', '.join([str(x) for x in all_substances])
+    query = "SELECT %s from %s_temp WHERE sensor_id = %d" % (query_substances, DATA_TABLE, sensor_id)
     try:
         cur.execute(query)
     except:
         sys.exit("Something went wrong: " + query)
     data = cur.fetchone()
-    for substance in data:
-        row.append(substance)
+    i = 0
+    for substance in all_substances:
+        if substance in sensor_substances:
+            row.append(data[i])
+        else:
+            row.append('-')
+        i+=1
     table.append(row)
 
 db.close()

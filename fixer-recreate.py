@@ -99,7 +99,7 @@ else:
 #####
 ##### Get params for the city's sensors
 #####
-query = "SELECT id, local_id, name, country, substances, link_src, link_xpaths FROM %s where city = '%d' ORDER BY local_id" % (DB_TABLE, city)
+query = "SELECT id, local_id, name, country, substances, link_src, link_xpaths FROM %s where city = '%s' ORDER BY local_id" % (DB_TABLE, city)
 cur.execute(query)
 new_local_id = 0
 for sensor_data in cur.fetchall():
@@ -110,7 +110,7 @@ for sensor_data in cur.fetchall():
     sensor_substances = sensor_data[4]
     sensor_link_src = sensor_data[5]
     sensor_link_xpaths = sensor_data[6]
-    sensor_city_dir = sensor_city.replace(" ", "_")
+    sensor_city_dir = city.replace(" ", "_")
 
     ### Rename old spider files
     command = "mv {0}/{1}/{2}/{3}.py {0}/{1}/{2}/old_{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id)

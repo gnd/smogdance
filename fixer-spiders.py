@@ -99,6 +99,14 @@ for line in cur.fetchall():
     city_dir = line[3].replace(" ", "_")
     link_src = line[4]
     link_xpaths = line[5]
+
+    ### check if the directories are created
+    if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
+        os.makedirs("%s/%s" % (SPIDER_DIR, country))
+    if (not os.path.isdir("%s/%s/%s" % (SPIDER_DIR, country, city_dir))):
+        os.makedirs("%s/%s/%s" % (SPIDER_DIR, country, city_dir))
+
+    ### create the new spider file
     spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
     template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, link_xpaths)
     write_template(spider_file, template)

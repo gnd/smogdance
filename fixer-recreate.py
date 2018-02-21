@@ -15,10 +15,21 @@ import os
 import sys
 import time
 import shlex
+import fnmatch
 import MySQLdb
 import datetime
 import subprocess
 import ConfigParser
+
+#####
+##### Check input TODO (sanitize like in poll-city)
+#####
+city = ""
+if (len(sys.argv) > 1):
+    city = sys.argv[1]
+else:
+    sys.exit("Not enough parameters")
+
 
 #####
 ##### Load config
@@ -26,8 +37,13 @@ import ConfigParser
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
+DATA_DIR = config.get('globals', 'DATA_DIR')
+STATS_DIR = config.get('globals', 'STATS_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
+MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
+SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
 SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
+rebuild = False
 
 #####
 ##### Define functions (TODO: create a file with commonly used functions to be included)
@@ -129,31 +145,34 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
-#####
-##### Check input TODO (sanitize like in poll-city)
-#####
-city = ""
-if (len(sys.argv) > 1):
-    city = sys.argv[1]
-else:
-    sys.exit("Not enough parameters")
-
 
 #####
-##### Remove all mrtg configs
+##### Check if the city needs reassembly
 #####
-mrtg_name = "*.cfg"
-mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
-command = "rm %s" % (mrtg_file)
-command_args = shlex.split(command)
-try:
-    print "Removing: %s" % (mrtg_file)
-    process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out = process.communicate()
-except subprocess.CalledProcessError as e:
-    print e
-    sys.exit("Removing: %s failed" % (mrtg_file)
+query = "SELECT count(*) as count FROM %s where city = '%s' ORDER BY local_id" % (DB_TABLE, city)
+cur.execute(query)
+count = cur.fetchone()[0]
+query = "SELECT local_id FROM %s where city = '%s' ORDER BY local_id DESC LIMIT 1" % (DB_TABLE, city)
+cur.execute(query)
+if (count == cur.fetchone()[0]+1):
+    sys.exit("Nothing to rebuild for %s" % city)
 
+#####
+##### Remove all mrtg configs & all mrtg output & compiled spiders
+#####
+query = "SELECT country FROM %s where city = '%s' LIMIT 1" % (DB_TABLE, city)
+cur.execute(query)
+country = cur.fetchone()[0]
+for filename in os.listdir("%s/%s/%s" % (SPIDER_DIR, country, city.replace(' ','_'))):
+    if fnmatch.fnmatch(filename, '*.pyc'):
+        os.remove("%s/%s/%s/%s" % (SPIDER_DIR, country, city.replace(' ','_'), filename))
+    if fnmatch.fnmatch(filename, '*.cfg'):
+        os.remove("%s/%s/%s/%s" % (SPIDER_DIR, country, city.replace(' ','_'), filename))
+for filename in os.listdir("%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'))):
+    if fnmatch.fnmatch(filename, '*.html'):
+        os.remove("%s/%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'), filename))
+    if fnmatch.fnmatch(filename, '*.png'):
+        os.remove("%s/%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'), filename))
 
 #####
 ##### Get params for the city's sensors
@@ -167,13 +186,13 @@ for sensor_data in cur.fetchall():
     sensor_local_id = int(sensor_data[1])
     sensor_name = sensor_data[2]
     sensor_country = sensor_data[3]
-    sensor_substances = sensor_data[4]
+    sensor_substances = sensor_data[4].split()
     sensor_link_src = sensor_data[5]
     sensor_link_xpaths = sensor_data[6]
     sensor_city_dir = city.replace(" ", "_")
 
     if (sensor_local_id != new_local_id):
-        ### Rename old spider files
+        ### Rename spider files
         command = "mv {0}/{1}/{2}/{3}.py {0}/{1}/{2}/{4}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id)
         command_args = shlex.split(command)
         try:
@@ -196,38 +215,27 @@ for sensor_data in cur.fetchall():
         cur.execute(query)
         db.commit()
 
-        ### Remove all mrtg output
-        command = "rm {0}/{1}/{2}/{2}*.png {0}/{1}/{2}/{2}*.html".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
-        command_args = shlex.split(command)
-        try:
-            print "Removing: {1}/{2}/{2}*.png {1}/{2}/{2}*.html".format(sensor_country, sensor_city_dir)
-            process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out = process.communicate()
-        except subprocess.CalledProcessError as e:
-            print e
-            sys.exit("Removing: {0}/{1}/{1}*.png {0}/{1}/{1}*.html failed".format(sensor_country, sensor_city_dir)
-
         ### Rename mrtg log files for each sensor substance
         for substance in sensor_substances:
             command = "mv {0}/{1}/{2}/{2}-{3}_{5}.log {0}/{1}/{2}/{2}-{4}_{5}.log".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
             command_args = shlex.split(command)
             try:
-                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{3}.log".format(sensor_country, sensor_city_dir, sensor_local_id, substance)
+                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.log to {0}/{1}/{1}-{3}_{4}.log".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
                 process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out = process.communicate()
             except subprocess.CalledProcessError as e:
                 print e
-                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.log failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance)
+                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.log failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance))
 
             command = "mv {0}/{1}/{2}/{2}-{3}_{5}.old {0}/{1}/{2}/{2}-{4}_{5}.old".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
             command_args = shlex.split(command)
             try:
-                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{3}.old".format(sensor_country, sensor_city_dir, sensor_local_id, substance)
+                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.old to {0}/{1}/{1}-{3}_{4}.old".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
                 process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out = process.communicate()
             except subprocess.CalledProcessError as e:
                 print e
-                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.old failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance)
+                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.old failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance))
 
         ### Recreate the mrtg files
         for substance in sensor_substances:
@@ -235,16 +243,17 @@ for sensor_data in cur.fetchall():
                 city_substances.append(substance)
             mrtg_name = "%s.cfg" % (substance)
             mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir, mrtg_name)
-            template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, sensor_city, sensor_country, substance)
+            template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, city, sensor_country, substance)
             mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, sensor_country, sensor_city_dir)
             write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
     ### Increment new_local_id
     new_local_id += 1
 
-### create index with indexmaker
+### create index with indexmakerCleanup old mrtg logs (if any)
 # indexmaker --title="Brno PM10 Levels (<a href=no2.html>NO2</a>  <a href=o3.html>O3</a> <a href=pm25.html>PM25</a>)" --nolegend cz/brno/pm10.cfg
 for substance in city_substances:
+    print substance
     links = ""
     for sub in city_substances:
         if (sub != substance):
@@ -254,9 +263,9 @@ for substance in city_substances:
                 links += "<a href=%s.html>%s</a> " % (sub, sub.upper())
 
     if (substance == 'pm10'):
-        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, sensor_country, sensor_city_dir, "index", sensor_city.capitalize(), substance.upper(), links, SPIDER_DIR, sensor_country, sensor_city_dir, substance)
+        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, sensor_country, sensor_city_dir, "index", city.capitalize(), substance.upper(), links, SPIDER_DIR, sensor_country, sensor_city_dir, substance)
     else:
-        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, sensor_country, sensor_city_dir, substance, sensor_city.capitalize(), substance.upper(), links, SPIDER_DIR, sensor_country, sensor_city_dir, substance)
+        command = "indexmaker --output=%s/%s/%s/%s.html --title=\"%s %s Levels (%s)\" --nolegend %s/%s/%s/%s.cfg" % (STATS_DIR, sensor_country, sensor_city_dir, substance, city.capitalize(), substance.upper(), links, SPIDER_DIR, sensor_country, sensor_city_dir, substance)
 
     command_args = shlex.split(command)
     ### run indexmaker
@@ -275,7 +284,15 @@ for substance in city_substances:
         print "mrtg index for %s created" % (substance)
 
 #####
-##### Cleanup
+##### Cleanup old mrtg logs (if any)
+#####
+for filename in os.listdir("%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'))):
+    if fnmatch.fnmatch(filename, '*.log'):
+        if (int(filename.split('-')[1].split('_')[0]) >= new_local_id):
+            os.remove("%s/%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'), filename))
+
+#####
+##### doooneeee chrr
 #####
 print "Done !"
 print "Please verify all is ok in %s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir)

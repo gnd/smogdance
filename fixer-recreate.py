@@ -190,6 +190,10 @@ for sensor_data in cur.fetchall():
     sensor_link_src = sensor_data[5]
     sensor_link_xpaths = sensor_data[6]
     sensor_city_dir = city.replace(" ", "_")
+    ### Get all substances collected in the city
+    for substance in sensor_substances:
+        if (substance not in city_substances):
+            city_substances.append(substance)
 
     if (sensor_local_id != new_local_id):
         ### Rename spider files
@@ -199,33 +203,31 @@ for sensor_data in cur.fetchall():
         os.rename(spider_from, spider_to)
 
         for substance in sensor_substances:
-            ### Recreate the mrtg config files
-            mrtg_name = "%s.cfg" % (substance)
-            mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir, mrtg_name)
-            template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, city, sensor_country, substance)
-            mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, sensor_country, sensor_city_dir)
-            write_mrtg_template(mrtg_file, mrtg_workdir, template)
-
             ### Rename mrtg log files for each sensor substance
             print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.log to {0}/{1}/{1}-{3}_{4}.log".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
             mrtg_from = "{0}/{1}/{2}/{2}-{3}_{4}.log".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, substance)
             mrtg_to = "{0}/{1}/{2}/{2}-{3}_{4}.log".format(STATS_DIR, sensor_country, sensor_city_dir, new_local_id, substance)
             os.rename(mrtg_from, mrtg_to)
 
+            ### Rename mrtg oldlog files for each sensor substance
             print "Renaming mrtg oldlog: {0}/{1}/{1}-{2}_{4}.old to {0}/{1}/{1}-{3}_{4}.old".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
             mrtg_from = "{0}/{1}/{2}/{2}-{3}_{4}.old".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, substance)
             mrtg_to = "{0}/{1}/{2}/{2}-{3}_{4}.old".format(STATS_DIR, sensor_country, sensor_city_dir, new_local_id, substance)
             os.rename(mrtg_from, mrtg_to)
-
-            ### Get all substances collected in the city
-            if (substance not in city_substances):
-                city_substances.append(substance)
 
         ### Change local_id in the database
         print "Changing local_id from %d to %d in the database" % (sensor_local_id, new_local_id)
         query = "UPDATE %s set local_id = %d WHERE id = %d" % (DB_TABLE, new_local_id, sensor_id)
         cur.execute(query)
         db.commit()
+
+    ### Recreate the mrtg config files
+    for substance in sensor_substances:
+        mrtg_name = "%s.cfg" % (substance)
+        mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir, mrtg_name)
+        template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, city, sensor_country, substance)
+        mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, sensor_country, sensor_city_dir)
+        write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
     ### Increment new_local_id
     new_local_id += 1

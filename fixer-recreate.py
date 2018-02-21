@@ -6,7 +6,7 @@
     An open-source collection of scripts to collect, store and graph air quality data
     from publicly available sources.
 
-    Helper script to recreate spider directories for cities with deleted sensors
+    Helper script to recreate spider directories and mrtg data for cities with deleted sensors
 
     gnd, 2017 - 2018
 """

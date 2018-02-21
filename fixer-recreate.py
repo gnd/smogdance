@@ -193,59 +193,39 @@ for sensor_data in cur.fetchall():
 
     if (sensor_local_id != new_local_id):
         ### Rename spider files
-        command = "mv {0}/{1}/{2}/{3}.py {0}/{1}/{2}/{4}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id)
-        command_args = shlex.split(command)
-        try:
-            print "Renaming spider file: {1}/{2}/{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id)
-            process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out = process.communicate()
-        except subprocess.CalledProcessError as e:
-            print e
-            sys.exit("Renaming spider file {1}/{2}/{3}.py failed").format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id)
+        print "Renaming spider file: {1}/{2}/{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id)
+        spider_from = "{0}/{1}/{2}/{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, sensor_local_id)
+        spider_to = "{0}/{1}/{2}/{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, new_local_id)
+        os.rename(spider_from, spider_to)
 
-        ### For each sensor recreate their spider files
-        #print "Creating new spider file: {0}/{1}/{2}/{3}.py".format(SPIDER_DIR, sensor_country, sensor_city_dir, new_local_id)
-        #spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, sensor_country, sensor_city_dir, new_local_id)
-        #template = fill_spider_template(SPIDER_TEMPLATE, sensor_name, sensor_link_src, sensor_link_xpaths)
-        #write_template(spider_file, template)
+        for substance in sensor_substances:
+            ### Recreate the mrtg config files
+            mrtg_name = "%s.cfg" % (substance)
+            mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir, mrtg_name)
+            template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, city, sensor_country, substance)
+            mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, sensor_country, sensor_city_dir)
+            write_mrtg_template(mrtg_file, mrtg_workdir, template)
+
+            ### Rename mrtg log files for each sensor substance
+            print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.log to {0}/{1}/{1}-{3}_{4}.log".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
+            mrtg_from = "{0}/{1}/{2}/{2}-{3}_{4}.log".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, substance)
+            mrtg_to = "{0}/{1}/{2}/{2}-{3}_{4}.log".format(STATS_DIR, sensor_country, sensor_city_dir, new_local_id, substance)
+            os.rename(mrtg_from, mrtg_to)
+
+            print "Renaming mrtg oldlog: {0}/{1}/{1}-{2}_{4}.old to {0}/{1}/{1}-{3}_{4}.old".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
+            mrtg_from = "{0}/{1}/{2}/{2}-{3}_{4}.old".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, substance)
+            mrtg_to = "{0}/{1}/{2}/{2}-{3}_{4}.old".format(STATS_DIR, sensor_country, sensor_city_dir, new_local_id, substance)
+            os.rename(mrtg_from, mrtg_to)
+
+            ### Get all substances collected in the city
+            if (substance not in city_substances):
+                city_substances.append(substance)
 
         ### Change local_id in the database
         print "Changing local_id from %d to %d in the database" % (sensor_local_id, new_local_id)
         query = "UPDATE %s set local_id = %d WHERE id = %d" % (DB_TABLE, new_local_id, sensor_id)
         cur.execute(query)
         db.commit()
-
-        ### Rename mrtg log files for each sensor substance
-        for substance in sensor_substances:
-            command = "mv {0}/{1}/{2}/{2}-{3}_{5}.log {0}/{1}/{2}/{2}-{4}_{5}.log".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
-            command_args = shlex.split(command)
-            try:
-                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.log to {0}/{1}/{1}-{3}_{4}.log".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
-                process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out = process.communicate()
-            except subprocess.CalledProcessError as e:
-                print e
-                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.log failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance))
-
-            command = "mv {0}/{1}/{2}/{2}-{3}_{5}.old {0}/{1}/{2}/{2}-{4}_{5}.old".format(STATS_DIR, sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
-            command_args = shlex.split(command)
-            try:
-                print "Renaming mrtg log: {0}/{1}/{1}-{2}_{4}.old to {0}/{1}/{1}-{3}_{4}.old".format(sensor_country, sensor_city_dir, sensor_local_id, new_local_id, substance)
-                process = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out = process.communicate()
-            except subprocess.CalledProcessError as e:
-                print e
-                sys.exit("Renaming mrtg log {0}/{1}/{1}-{2}_{3}.old failed".format(sensor_country, sensor_city_dir, sensor_local_id, substance))
-
-        ### Recreate the mrtg files
-        for substance in sensor_substances:
-            if (substance not in city_substances):
-                city_substances.append(substance)
-            mrtg_name = "%s.cfg" % (substance)
-            mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, sensor_country, sensor_city_dir, mrtg_name)
-            template = fill_mrtg_template(MRTG_TEMPLATE, sensor_id, new_local_id, sensor_name, city, sensor_country, substance)
-            mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, sensor_country, sensor_city_dir)
-            write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
     ### Increment new_local_id
     new_local_id += 1
@@ -287,7 +267,7 @@ for substance in city_substances:
 ##### Cleanup old mrtg logs (if any)
 #####
 for filename in os.listdir("%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'))):
-    if fnmatch.fnmatch(filename, '*.log'):
+    if (fnmatch.fnmatch(filename, '*.log') | fnmatch.fnmatch(filename, '*.old')):
         if (int(filename.split('-')[1].split('_')[0]) >= new_local_id):
             os.remove("%s/%s/%s/%s" % (STATS_DIR, country, city.replace(' ','_'), filename))
 

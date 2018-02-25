@@ -39,19 +39,32 @@ if (len(sys.argv) < PARAMS):
     sys.exit("Not enough arguments.\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>")
 else:
     try:
-        response_size = int(sys.argv[3])
+        response_size = int(sys.argv[4])
     except:
-        sys.exit("Bad size parameter: %s\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>" % (sys.argv[3]))
+        sys.exit("Bad size parameter: %s\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>" % (sys.argv[4]))
 
 
-def fill_spider_template(template, name, link_src, size, type):
+def fill_spider_template(template, name, link_src, checks, type):
     f = file(template, 'r')
     tmp = f.read()
     f.close()
     res = tmp.replace("SPIDER_NAME", name)
     res = res.replace("LINK_SRC", link_src)
+    outputs = ""
     if (type == 'bulk'):
-        outputs = "        if ((response.status == 200) and len(response.text) > %d):\n" % (size)
+        expected_string_all = []
+        remote_string_all = []
+        response_size = int(checks.split('===')[0])
+        checkpoints = checks.split('===')[1]
+        for line in checkpoints.split(";"):
+            expected_string = line.split("--")[0]
+            remote_string = line.split("--")[1]
+            expected_string_all.append(expected_string)
+            remote_string_all.append("%s")
+            outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string, remote_string)
+        outputs += "        EXPECTED = '%s'\n" % (' '.join(expected_string_all))
+        outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_all))
+        outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
         outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
         outputs += '            print "OK"\n'
     res = res.replace("OUTPUTS", outputs)
@@ -82,15 +95,17 @@ cur = db.cursor()
 ### process input
 name = sys.argv[1]
 link_src = sys.argv[2]
-response_size = int(sys.argv[3])
-country = sys.argv[4]
-city = sys.argv[5]
-type = sys.argv[6]
+checkpoints = sys.argv[3]
+response_size = int(sys.argv[4])
+country = sys.argv[5]
+city = sys.argv[6]
+type = sys.argv[7]
 
+checks = str(response_size) + '===' + checkpoints
 
 ### execute query
 print "Inserting %s-%s into db" % ("special", name)
-query = "INSERT INTO %s VALUES(0,'%d','%s','%s','','','%d','%s','','','%s','', now(), %d, '%d', '%d')" % (DB_TABLE, 0, name, link_src, response_size, country, type, 0, 0, 1)
+query = "INSERT INTO %s VALUES(0,'%d','%s','%s','','','%s','%s','','','%s','', now(), %d, '%d', '%d')" % (DB_TABLE, 0, name, link_src, checks, country, type, 0, 0, 1)
 cur.execute(query)
 db.commit()
 id = int(cur.lastrowid)
@@ -103,5 +118,5 @@ if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
 ### create new sensor spider on disk
 spider_name = "special-%s" % (name)
 spider_file = "%s/%s/%s.py" % (SPIDER_DIR, country, spider_name)
-template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, response_size, type)
+template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, checks, type)
 write_template(spider_file, template)

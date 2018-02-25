@@ -67,6 +67,9 @@ def fill_spider_template(template, name, link_src, checks, type):
         outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
         outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
         outputs += '            print "OK"\n'
+        outputs += "        else:\n"
+        outputs += "            os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
+        outputs += '            print "Integrity check failed"\n'
     res = res.replace("OUTPUTS", outputs)
     return res
 

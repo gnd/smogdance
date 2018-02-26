@@ -53,17 +53,23 @@ def fill_spider_template(template, name, link_src, checks, type):
     outputs = ""
     if (type == 'bulk'):
         expected_string_all = []
+        expected_string_safe_all = []
         remote_string_all = []
         response_size = int(checks.split('===')[0])
         checkpoints = checks.split('===')[1]
         for line in checkpoints.split(";"):
             expected_string = line.split("--")[0]
+            if (expected_string[0].isdigit()):
+                expected_string_safe = expected_string[1:]
+            else:
+                expected_string_safe = expected_string
             remote_string = line.split("--")[1]
             expected_string_all.append(expected_string)
+            expected_string_safe_all.append(expected_string_safe)
             remote_string_all.append("%s")
-            outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string, remote_string)
+            outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string_safe, remote_string)
         outputs += "        EXPECTED = '%s'\n" % (' '.join(expected_string_all))
-        outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_all))
+        outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_safe_all))
         outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
         outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
         outputs += '            print "OK"\n'

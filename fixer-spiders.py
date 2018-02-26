@@ -84,8 +84,8 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 cur = db.cursor()
 
-# get all CZ sensors
-query = "SELECT local_id, name, country, city, link_src, link_xpaths FROM %s WHERE country = 'cz' and type ='hourly' ORDER BY id" % (DB_TABLE)
+# get all AT sensors  -- fixing AT - 26.2.2018
+query = "SELECT local_id, name, country, city, link_src, link_xpaths FROM %s WHERE country = 'at' and type ='hourly' ORDER BY id" % (DB_TABLE)
 try:
     cur.execute(query)
 except:

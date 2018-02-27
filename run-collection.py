@@ -187,6 +187,16 @@ for sensor in sensors:
                 ### 0 is ok 1 is failed, mark as inactive
                 query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
                 cur.execute(query)
+                ### notify
+                try:
+                    notify_cmd = "%s/report-state-change.sh %s %s" % (DATA_DIR, sensor_name, "failed fifth time")
+                    print notify_cmd
+                    notify_args = shlex.split(notify_cmd)
+                    process = subprocess.Popen(notify_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    out = process.communicate()
+                except:
+                    print "Couldnt report sensor state change\n"
+                    pass
         else:
             if (sensor_last_state == 1):
                 print "setting sensor %s as inactive:" % (sensor_id)

@@ -187,11 +187,12 @@ for sensor in sensors:
                 ### 0 is ok 1 is failed, mark as inactive
                 query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
                 cur.execute(query)
-        else if (sensor_last_state == 1)
-            print "setting sensor %s as inactive:" % (sensor_id)
-            ### 0 is ok 1 is failed, mark as inactive
-            query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
-            cur.execute(query)
+        else:
+            if (sensor_last_state == 1):
+                print "setting sensor %s as inactive:" % (sensor_id)
+                ### 0 is ok 1 is failed, mark as inactive
+                query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
+                cur.execute(query)
         db.commit()
 
     ### or store the data in the database

@@ -170,6 +170,7 @@ cur.execute(query)
 id = int(cur.lastrowid)
 print "Inserting %s-%s into the temp table" % (city, name)
 query = "INSERT INTO %s_temp VALUES('%d',now(),0,0,0,0,0,0)" % (DATA_TABLE, id)
+cur.execute(query)
 db.commit()
 db.close()
 

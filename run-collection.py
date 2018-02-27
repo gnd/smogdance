@@ -176,7 +176,18 @@ for sensor in sensors:
             query = "UPDATE %s SET last_state = 1 WHERE id = %s" % (DB_TABLE, sensor_id)
             cur.execute(query)
 
-        if (sensor_last_state == 1):
+        if (sensor_country == 'hu'):
+            if ((sensor_last_state > 1) and (sensor_last_state < 5)):
+                print "hungarian sensor %s gets more chances" % (sensor_id)
+                ### 0 is ok 1 is failed, mark as inactive
+                query = "UPDATE %s SET last_state = %d WHERE id = %s" % (DB_TABLE, sensor_last_state+1, sensor_id)
+                cur.execute(query)
+            if (sensor_last_state == 5):
+                print "setting sensor %s as inactive:" % (sensor_id)
+                ### 0 is ok 1 is failed, mark as inactive
+                query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
+                cur.execute(query)
+        else if (sensor_last_state == 1)
             print "setting sensor %s as inactive:" % (sensor_id)
             ### 0 is ok 1 is failed, mark as inactive
             query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)

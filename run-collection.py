@@ -161,13 +161,13 @@ for sensor in sensors:
         process = subprocess.Popen(spider_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out = process.communicate()
     except:
-        print "Couldnt run sensor %s/special-%s" % (sensor_country, sensor_name)
+        print "Couldnt run sensor %s/%s/%s" % (sensor_country, sensor_city, sensor_name)
         out = "Sensor failed"
         # dont be lazy gnd
         pass
 
     ### if non-zero return, we have a problem
-    if (out[1] != ""):
+    if ((out[1] != "") or (len(out[0]) == 0)):
         print "Spider %s/%s/%s failed:" % (sensor_country, sensor_city, sensor_local_id)
         print out[1]
         if (sensor_last_state == 0):

@@ -74,8 +74,12 @@ def fill_spider_template(template, name, link_src, checks, type):
         outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
         outputs += '            print "OK"\n'
         outputs += "        else:\n"
-        outputs += "            os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
+        outputs += "            if (os.path.isfile('%s/%s.html')):\n" % (TEMP_DIR, name)"
+        outputs += "                os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
+        outputs += '            print "------------------ !!! ------------------"\n'
         outputs += '            print "Integrity check failed"\n'
+        outputs += '            print "EXPECTED: %s" % (EXPECTED)\n'
+        outputs += '            print "REMOTE: %s" % (REMOTE)\n'
     res = res.replace("OUTPUTS", outputs)
     return res
 

@@ -2,9 +2,15 @@
 #########
 source settings_bash
 
-if [[ -z "$1" ]]; then
-	echo "no spider to run"
+function usage() {
+	echo "Usage:"
+    echo "$0 <country_code/city_name/spider_name> [tor]"
+	echo "eg.: $0 cz/praha/0"
 	exit
+}
+
+if [[ -z "$1" ]]; then
+	usage
 fi
 
 if [[ "$2" == "tor" ]]; then

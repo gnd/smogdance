@@ -8,12 +8,13 @@ def strip_accents(s):
        if unicodedata.category(c) != 'Mn')
 
 
-def fill_spider_template(template, name, link_src, link_xpaths):
+def fill_spider_template(TEMP_DIR, template, name, link_src, link_xpaths):
     f = file(template, 'r')
     tmp = f.read()
     f.close()
     res = tmp.replace("SPIDER_NAME", name)
     res = res.replace("LINK_SRC", link_src)
+    res = res.replace("TEMP_DIR", TEMP_DIR)
 
     ### build some outputs
     outputs = ""

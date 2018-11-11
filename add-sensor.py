@@ -29,6 +29,7 @@ settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 DATA_DIR = config.get('globals', 'DATA_DIR')
+TEMP_DIR = config.get('globals', 'TEMP_DIR')
 STATS_DIR = config.get('globals', 'STATS_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
@@ -101,7 +102,7 @@ if (not os.path.isdir("%s/%s/%s" % (STATS_DIR, country, city_dir))):
 ### create new sensor spider on disk
 spider_name = local_id
 spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
-template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, link_xpaths)
+template = fill_spider_template(TEMP_DIR, SPIDER_TEMPLATE, name, link_src, link_xpaths)
 write_template(spider_file, template)
 
 ### update mrtg for the city and substance

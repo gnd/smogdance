@@ -224,6 +224,7 @@ for sensor in sensors:
         # long term storage
         query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE, substance_names, sensor_id, substance_values)
         print "storing values for %d into %s" % (sensor_id, DATA_TABLE)
+        print query
         cur.execute(query)
 
         ### set last state and last_run

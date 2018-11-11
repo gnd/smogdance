@@ -40,11 +40,35 @@ cur = db.cursor()
 if (len(sys.argv) > 1):
     task = sys.argv[1]
 else:
-    sys.exit("Usage: ./add-definitions.py <normal | special> [at | cz | hu | pl | sk]")
+    sys.exit("Usage: ./add-definitions.py <custom file> <normal | special> [at | cz | hu | pl | sk]")
 
+
+### import custom sensors
+if (task == 'custom'):
+    if (len(sys.argv) > 2):
+        custom = sys.argv[2]
+        f = file(custom, 'r')
+        definitions = f.readlines()
+        f.close()
+        print "Importing definitions from %s" % (custom)
+        for line in definitions:
+            import_cmd = "%s/add-sensor.py %s" % (DATA_DIR, line)
+            import_args = shlex.split(import_cmd)
+
+            ### run the import
+            try:
+                print "Trying to run %s/add-sensor.py %s" % (DATA_DIR, line)
+                process = subprocess.Popen(import_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out = process.communicate()[1]
+                if (process.returncode != 0):
+                    print "Import failed:\n%s" % (out)
+            except:
+                print "Couldnt run %s/add-sensor.py %s" % (DATA_DIR, line)
+    else:
+        sys.exit("Usage: ./add-definitions.py <custom file> <normal | special> [at | cz | hu | pl | sk]")
 
 ### import normal sensors
-if (task == 'normal'):
+elif (task == 'normal'):
     if (len(sys.argv) > 2):
         country = sys.argv[2]
         files = [f for f in os.listdir(DATA_DIR+"/definitions") if os.path.isfile(os.path.join(DATA_DIR+"/definitions", f))]
@@ -136,4 +160,4 @@ elif (task == 'special'):
 
 ### just show the usage
 else:
-    sys.exit("Usage: ./add-definitions.py <normal | special> [at | cz | hu | pl | sk]")
+    sys.exit("Usage: ./add-definitions.py <custom file> <normal | special> [at | cz | hu | pl | sk]")

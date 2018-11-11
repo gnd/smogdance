@@ -6,7 +6,7 @@
     An open-source collection of scripts to collect, store and graph air quality data
     from publicly available sources.
 
-    This outputs current sensor definitions from the database to the console. 
+    This outputs current sensor definitions from the database to the console.
 
     gnd, 2018
 """
@@ -35,12 +35,13 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 cur = db.cursor()
 
-# get all AT sensors  -- fixing AT - 26.2.2018
-query = "SELECT name, link_src, link_web, link_stat, link_xpaths, country, city, gps, type, substances FROM %s WHERE country = 'at' ORDER BY id" % (DB_TABLE)
-try:
-    cur.execute(query)
-except:
-    sys.exit("Something went wrong: " + query)
+countries = ['at','cz']
+for country in countries:
+    query = "SELECT name, link_src, link_web, link_stat, link_xpaths, country, city, gps, type, substances FROM %s WHERE country = '%s' ORDER BY id" % (DB_TABLE, country)
+    try:
+        cur.execute(query)
+    except:
+        sys.exit("Something went wrong: " + query)
 
-for l in cur.fetchall():
-    print "'%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'" % (l[0],l[1].replace('/data/www/smog.dance/smogdance/temp','TEMP_DIR'),l[2],l[3].replace('stats.smog.dance','STATS_URL'),l[4],l[5],l[6],l[7],l[8],l[9])
+    for l in cur.fetchall():
+        print "'%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'" % (l[0],l[1].replace('/data/www/smog.dance/smogdance/temp','TEMP_DIR'),l[2],l[3].replace('stats.smog.dance','STATS_URL'),l[4],l[5],l[6],l[7],l[8],l[9])

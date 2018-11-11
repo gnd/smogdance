@@ -23,10 +23,6 @@ import subprocess
 import unicodedata
 import ConfigParser
 
-### Import smog functions
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-from smog_functions import *
-
 ### load config
 settings_file = os.path.join(sys.path[0], '../settings_python')
 config = ConfigParser.ConfigParser()
@@ -50,49 +46,54 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 cur = db.cursor()
 
+### Import smog functions
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+from smog_functions import *
+
 ### First fix xpath in the database
-country = 'cz'
-query = "SELECT id, local_id, city, link_web, link_src, link_xpaths FROM %s WHERE country = '%s' and type ='hourly' ORDER BY id" % (DB_TABLE, country)
-try:
-    cur.execute(query)
-except:
-    sys.exit("Something went wrong: " + query)
-
-### Get spider UID (eg. AKALA) and use it to rwrite the xpath queries
-for line in cur.fetchall():
-    spider_id = line[0]
-    spider_local_id = line[1]
-    city = line[2]
-    spider_uid = line[3].split("mp_")[1].split("_CZ")[0]
-    link_src = line[4]
-    spider_xpaths = line[5]
-    new_xpath = ""
-    for xpath in spider_xpaths.split(";"):
-        subname = xpath.split("--")[0]
-        subrow = xpath.split("--")[1].split("td[")[1].split("]")[0]     # this is the number of the <td> element of the given <tr> in the CHMI table
-        newpath = "%s--%s:%s--%s" % (subname, spider_uid, subrow, "cz_chmi")
-        new_xpath = new_xpath + ";" + newpath
-
-    ### Now store the new xpath in the table
-    query = "UPDATE %s SET link_xpaths = '%s' WHERE id = %s" % (DB_TABLE, new_xpath[1:], spider_id)
+countries = ['at','cz','pl']
+for country in countries:
+    query = "SELECT id, local_id, city, link_web, link_src, link_xpaths FROM %s WHERE country = '%s' and type ='hourly' ORDER BY id" % (DB_TABLE, country)
     try:
         cur.execute(query)
     except:
         sys.exit("Something went wrong: " + query)
 
-    ### Check if the directories are created
-    city_dir = city.replace(" ", "_")
-    if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
-        os.makedirs("%s/%s" % (SPIDER_DIR, country))
-    if (not os.path.isdir("%s/%s/%s" % (SPIDER_DIR, country, city_dir))):
-        os.makedirs("%s/%s/%s" % (SPIDER_DIR, country, city_dir))
+    ### Get spider UID (eg. AKALA) and use it to rwrite the xpath queries
+    for line in cur.fetchall():
+        spider_id = line[0]
+        spider_local_id = line[1]
+        city = line[2]
+        spider_uid = line[3].split("mp_")[1].split("_CZ")[0]
+        link_src = line[4]
+        spider_xpaths = line[5]
+        new_xpath = ""
+        for xpath in spider_xpaths.split(";"):
+            subname = xpath.split("--")[0]
+            subrow = xpath.split("--")[1].split("td[")[1].split("]")[0]     # this is the number of the <td> element of the given <tr> in the CHMI table
+            newpath = "%s--%s:%s--%s" % (subname, spider_uid, subrow, "cz_chmi")
+            new_xpath = new_xpath + ";" + newpath
 
-    ### Create the new spider file
-    spider_name = str(spider_local_id)
-    print spider_name
-    spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
-    template = fill_spider_template("../"+SPIDER_TEMPLATE, spider_name, link_src, new_xpath[1:])
-    write_template(spider_file, template)
+        ### Now store the new xpath in the table
+        query = "UPDATE %s SET link_xpaths = '%s' WHERE id = %s" % (DB_TABLE, new_xpath[1:], spider_id)
+        try:
+            cur.execute(query)
+        except:
+            sys.exit("Something went wrong: " + query)
+
+        ### Check if the directories are created
+        city_dir = city.replace(" ", "_")
+        if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
+            os.makedirs("%s/%s" % (SPIDER_DIR, country))
+        if (not os.path.isdir("%s/%s/%s" % (SPIDER_DIR, country, city_dir))):
+            os.makedirs("%s/%s/%s" % (SPIDER_DIR, country, city_dir))
+
+        ### Create the new spider file
+        spider_name = str(spider_local_id)
+        print spider_name
+        spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
+        template = fill_spider_template("../"+SPIDER_TEMPLATE, spider_name, link_src, new_xpath[1:])
+        write_template(spider_file, template)
 
 db.commit()
 db.close()

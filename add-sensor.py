@@ -24,9 +24,6 @@ import MySQLdb
 import subprocess
 import ConfigParser
 
-### Import Smog functions
-from smog_functions import *
-
 ### load config
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
@@ -51,6 +48,9 @@ DB_TABLE = config.get('database', 'DB_TABLE')
 DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
+
+### Import Smog functions
+from smog_functions import *
 
 ### process input
 name = strip_accents(unicode(sys.argv[1]))
@@ -109,7 +109,7 @@ for substance in substances.split():
     mrtg_name = "%s.cfg" % (substance)
     mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, country, city_dir)
     mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
-    template = fill_mrtg_template(MRTG_TEMPLATE, id, local_id, name, city, country, substance)
+    template = fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, MRTG_TEMPLATE, id, local_id, name, city, country, substance)
     write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
 ### add mrtg configs to the runlist

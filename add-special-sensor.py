@@ -25,8 +25,6 @@ import MySQLdb
 import subprocess
 import ConfigParser
 
-from smog_functions import *
-
 ### load config
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
@@ -60,6 +58,7 @@ DB_TABLE = config.get('database', 'DB_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
+from smog_functions import *
 
 ### process input
 name = sys.argv[1]
@@ -87,5 +86,5 @@ if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
 ### create new sensor spider on disk
 spider_name = "special-%s" % (name)
 spider_file = "%s/%s/%s.py" % (SPIDER_DIR, country, spider_name)
-template = fill_special_spider_template(SPIDER_TEMPLATE, name, link_src, checks, type)
+template = fill_special_spider_template(TEMP_DIR, SPIDER_TEMPLATE, name, link_src, checks, type)
 write_template(spider_file, template)

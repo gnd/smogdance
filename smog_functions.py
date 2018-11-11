@@ -3,18 +3,6 @@ import sys
 import ConfigParser
 import unicodedata
 
-### load config
-settings_file = os.path.join(sys.path[0], 'settings_python')
-config = ConfigParser.ConfigParser()
-config.readfp(open(settings_file))
-DATA_DIR = config.get('globals', 'DATA_DIR')
-TEMP_DIR = config.get('globals', 'TEMP_DIR')
-STATS_DIR = config.get('globals', 'STATS_DIR')
-SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
-MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
-SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
-SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
-
 def strip_accents(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s)
        if unicodedata.category(c) != 'Mn')
@@ -65,7 +53,7 @@ def fill_spider_template(template, name, link_src, link_xpaths):
     return res
 
 
-def fill_special_spider_template(template, name, link_src, checks, type):
+def fill_special_spider_template(TEMP_DIR, template, name, link_src, checks, type):
     f = file(template, 'r')
     tmp = f.read()
     f.close()
@@ -115,7 +103,7 @@ def fill_special_spider_template(template, name, link_src, checks, type):
     return res
 
 
-def fill_mrtg_template(template, id, local_id, name, city, country, substance):
+def fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, template, id, local_id, name, city, country, substance):
     f = file(template, 'r')
     tmp = f.read()
     f.close()

@@ -28,7 +28,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from smog_functions import *
 
 ### load config
-settings_file = os.path.join(sys.path[0], 'settings_python')
+settings_file = os.path.join(sys.path[0], '../settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 DATA_DIR = config.get('globals', 'DATA_DIR')
@@ -52,7 +52,7 @@ cur = db.cursor()
 
 ### First fix xpath in the database
 country = 'cz'
-query = "SELECT id, local_id, city, link_src, link_xpaths FROM %s WHERE country = '%s' and type ='hourly' ORDER BY id" % (DB_TABLE, country)
+query = "SELECT id, local_id, city, link_web, link_src, link_xpaths FROM %s WHERE country = '%s' and type ='hourly' ORDER BY id" % (DB_TABLE, country)
 try:
     cur.execute(query)
 except:
@@ -64,7 +64,8 @@ for line in cur.fetchall():
     spider_local_id = line[1]
     city = line[2]
     spider_uid = line[3].split("mp_")[1].split("_CZ")[0]
-    spider_xpaths = line[4]
+    link_src = line[4]
+    spider_xpaths = line[5]
     new_xpath = ""
     for xpath in spider_xpaths.split(";"):
         subname = xpath.split("--")[0]
@@ -73,7 +74,7 @@ for line in cur.fetchall():
         new_xpath = new_xpath + ";" + newpath
 
     ### Now store the new xpath in the table
-    query = "UPDATE %s SET link_xpaths = %s WHERE id = %s" % (DB_TABLE, new_xpath, spider_id)
+    query = "UPDATE %s SET link_xpaths = '%s' WHERE id = %s" % (DB_TABLE, new_xpath[1:], spider_id)
     try:
         cur.execute(query)
     except:
@@ -87,9 +88,10 @@ for line in cur.fetchall():
         os.makedirs("%s/%s/%s" % (SPIDER_DIR, country, city_dir))
 
     ### Create the new spider file
-    spider_name = spider_local_id
+    spider_name = str(spider_local_id)
+    print spider_name
     spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
-    template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, new_xpath)
+    template = fill_spider_template("../"+SPIDER_TEMPLATE, spider_name, link_src, new_xpath[1:])
     write_template(spider_file, template)
 
 db.commit()

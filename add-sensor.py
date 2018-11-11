@@ -22,7 +22,6 @@ sys.setdefaultencoding("utf-8")
 import shlex
 import MySQLdb
 import subprocess
-import unicodedata
 import ConfigParser
 
 ### Import Smog functions
@@ -164,3 +163,6 @@ for substance in substances.split():
         print "Something went wrong: %s" % (out[1])
     else:
         print "mrtg index for %s created" % (substance)
+
+### If we reached end
+sys.exit()

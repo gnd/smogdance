@@ -38,12 +38,12 @@ SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
 
 ### check if proper arguments
 if (len(sys.argv) < PARAMS):
-    sys.exit("Not enough arguments.\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>")
+    sys.exit("Not enough arguments.\nUsage: ./add-special-sensor.py <name> <link_src> <checkpoints> <response_size> <country> <city> <type>")
 else:
     try:
         response_size = int(sys.argv[4])
     except:
-        sys.exit("Bad size parameter: %s\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>" % (sys.argv[4]))
+        sys.exit("Bad size parameter: %s\nUsage: ./add-special-sensor.py <name> <link_src> <checkpoints> <response_size> <country> <city> <type>" % (sys.argv[4]))
 
 
 ### initial checks

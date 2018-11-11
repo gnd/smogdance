@@ -26,7 +26,7 @@ for line in lines:
         newpath = "%s--%s:%s--%s" % (subname, uid, subrow, "cz_chmi")
         xpath = xpath + ";" + newpath
     arr = line.split("' '")
-    arr[4] = xpath
+    arr[4] = xpath[1:]
     newlines.append("' '".join(arr))
 f = file('../definitions/cz-chmi-fixed','w')
 for line in newlines:

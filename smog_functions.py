@@ -1,3 +1,20 @@
+import os
+import sys
+import ConfigParser
+import unicodedata
+
+### load config
+settings_file = os.path.join(sys.path[0], 'settings_python')
+config = ConfigParser.ConfigParser()
+config.readfp(open(settings_file))
+DATA_DIR = config.get('globals', 'DATA_DIR')
+TEMP_DIR = config.get('globals', 'TEMP_DIR')
+STATS_DIR = config.get('globals', 'STATS_DIR')
+SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
+MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
+SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
+SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
+
 def strip_accents(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s)
        if unicodedata.category(c) != 'Mn')
@@ -13,6 +30,7 @@ def fill_spider_template(template, name, link_src, link_xpaths):
     ### build some outputs
     outputs = ""
     substances = []
+    print link_xpaths
     for line in link_xpaths.split(";"):
         tmp = ""
         substance = line.split("--")[0]
@@ -23,10 +41,12 @@ def fill_spider_template(template, name, link_src, link_xpaths):
             tmp = "        xpath = \"%s\"\n" % (xpath)
             tmp += "        %s = j[\"data\"][xpath][\"value\"] if ((j[\"data\"] != {}) and (\"value\" in j[\"data\"][xpath])) else 'None'\n" % (substance)
             outputs += tmp
-        if (modifier == 'cz_chmi'):
+        elif (modifier == 'cz_chmi'):
             sensor_uid = xpath.split(":")[0]
             substance_row = xpath.split(":")[1]
-            tmp = "        %s = ' '.join(response.xpath(""//*[contains(text(), '%s')]/../../td[%s]//text()"").extract()).strip().replace(' ','')\n" % (substance, sensor_uid, substance_row)
+            tmp = "        %s = ' '.join(response.xpath(\"//*[contains(text(), '%s')]/../../td[%s]//text()\").extract()).strip().replace(' ','')\n" % (substance, sensor_uid, substance_row)
+            tmp += "        %s = 'None' if %s == '' else %s\n" % (substance, substance, substance)
+            outputs += tmp
         else:
             tmp = "        %s = ' '.join(response.xpath('%s').extract()).strip().replace(' ','')\n" % (substance, xpath)
             tmp += "        %s = 'None' if %s == '' else %s\n" % (substance, substance, substance)
@@ -58,29 +78,39 @@ def fill_special_spider_template(template, name, link_src, checks, type):
         remote_string_all = []
         response_size = int(checks.split('===')[0])
         checkpoints = checks.split('===')[1]
-        for line in checkpoints.split(";"):
-            expected_string = line.split("--")[0]
-            if (expected_string[0].isdigit()):
-                expected_string_safe = expected_string[1:]
-            else:
-                expected_string_safe = expected_string
-            remote_string = line.split("--")[1]
-            expected_string_all.append(expected_string)
-            expected_string_safe_all.append(expected_string_safe)
-            remote_string_all.append("%s")
-            outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string_safe, remote_string)
-        outputs += "        EXPECTED = '%s'\n" % (' '.join(expected_string_all))
-        outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_safe_all))
-        outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
-        outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
-        outputs += '            print "OK"\n'
-        outputs += "        else:\n"
-        outputs += "            if (os.path.isfile('%s/%s.html')):\n" % (TEMP_DIR, name)"
-        outputs += "                os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
-        outputs += '            print "------------------ !!! ------------------"\n'
-        outputs += '            print "Integrity check failed"\n'
-        outputs += '            print "EXPECTED: %s" % (EXPECTED)\n'
-        outputs += '            print "REMOTE: %s" % (REMOTE)\n'
+        if (checkpoints != ""):
+            for line in checkpoints.split(";"):
+                expected_string = line.split("--")[0]
+                if (expected_string[0].isdigit()):
+                    expected_string_safe = expected_string[1:]
+                else:
+                    expected_string_safe = expected_string
+                remote_string = line.split("--")[1]
+                expected_string_all.append(expected_string)
+                expected_string_safe_all.append(expected_string_safe)
+                remote_string_all.append("%s")
+                outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string_safe, remote_string)
+            outputs += "        EXPECTED = '%s'\n" % (' '.join(expected_string_all))
+            outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_safe_all))
+            outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
+            outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
+            outputs += '            print "OK"\n'
+            outputs += "        else:\n"
+            outputs += "            if (os.path.isfile('%s/%s.html')):\n" % (TEMP_DIR, name)
+            outputs += "                os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
+            outputs += '            print "------------------ !!! ------------------"\n'
+            outputs += '            print "Integrity check failed"\n'
+            outputs += '            print "EXPECTED: %s" % (EXPECTED)\n'
+            outputs += '            print "REMOTE: %s" % (REMOTE)\n'
+        else:
+            outputs += "        if ((response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
+            outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
+            outputs += '            print "OK"\n'
+            outputs += "        else:\n"
+            outputs += "            if (os.path.isfile('%s/%s.html')):\n" % (TEMP_DIR, name)
+            outputs += "                os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
+            outputs += '            print "------------------ !!! ------------------"\n'
+            outputs += '            print "Integrity check failed"\n'
     res = res.replace("OUTPUTS", outputs)
     return res
 

@@ -35,7 +35,7 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 cur = db.cursor()
 
-countries = ['at','cz']
+countries = ['at','cz','pl']
 for country in countries:
     query = "SELECT name, link_src, link_web, link_stat, link_xpaths, country, city, gps, type, substances FROM %s WHERE country = '%s' ORDER BY id" % (DB_TABLE, country)
     try:

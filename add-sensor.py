@@ -26,7 +26,7 @@ import unicodedata
 import ConfigParser
 
 ### Import Smog functions
-from smog-functions import *
+from smog_functions import *
 
 ### load config
 settings_file = os.path.join(sys.path[0], 'settings_python')

@@ -25,6 +25,8 @@ import MySQLdb
 import subprocess
 import ConfigParser
 
+from smog_functions import *
+
 ### load config
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()

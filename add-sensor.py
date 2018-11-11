@@ -25,6 +25,9 @@ import subprocess
 import unicodedata
 import ConfigParser
 
+### Import Smog functions
+from smog-functions import *
+
 ### load config
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
@@ -35,95 +38,6 @@ SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
 SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
 SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
-
-def strip_accents(s):
-   return ''.join(c for c in unicodedata.normalize('NFD', s)
-       if unicodedata.category(c) != 'Mn')
-
-
-def fill_spider_template(template, name, link_src, link_xpaths):
-    f = file(template, 'r')
-    tmp = f.read()
-    f.close()
-    res = tmp.replace("SPIDER_NAME", name)
-    res = res.replace("LINK_SRC", link_src)
-
-    ### build some outputs
-    outputs = ""
-    substances = []
-    for line in link_xpaths.split(";"):
-        tmp = ""
-        substance = line.split("--")[0]
-        substances.append(substance)
-        xpath = line.split("--")[1]
-        modifier = line.split("--")[2]
-        if (modifier == 'hu_json'):
-            tmp = "        xpath = \"%s\"\n" % (xpath)
-            tmp += "        %s = j[\"data\"][xpath][\"value\"] if ((j[\"data\"] != {}) and (\"value\" in j[\"data\"][xpath])) else 'None'\n" % (substance)
-            outputs += tmp
-        else:
-            tmp = "        %s = ' '.join(response.xpath('%s').extract()).strip().replace(' ','')\n" % (substance, xpath)
-            tmp += "        %s = 'None' if %s == '' else %s\n" % (substance, substance, substance)
-            ### modifiers are currently not really used, but might be handy
-            if modifier == "int":
-                tmp += "        %s = int(float(%s))\n" % (substance)
-            outputs += tmp
-    if (modifier == 'hu_json'):
-        head = "        j = json.loads(json.loads(response.text))\n"
-        outputs = head + outputs
-    tmp = ""
-    for substance in substances:
-        tmp += '%s '
-    outputs += '        print "' + tmp.strip() + '" % ' + "(%s)" % (','.join(substances))
-
-    res = res.replace("OUTPUTS", outputs)
-    return res
-
-
-def fill_mrtg_template(template, id, local_id, name, city, country, substance):
-    f = file(template, 'r')
-    tmp = f.read()
-    f.close()
-
-    name = "%s - %s" % (city.capitalize(), name)
-    run_command = "%s/%s"  % (DATA_DIR, SPIDER_COMMAND)
-    sensor_desc = "%s-%s" % (city, local_id)
-    mrtg_id = "%s_%s" % (sensor_desc.replace(" ","_"), substance)
-
-    res = tmp.replace("SENSOR_NAME", name)
-    res = res.replace("RUN_COMMAND", run_command)
-    res = res.replace("SENSOR_DESC", sensor_desc.upper())
-    res = res.replace("SUBSTANCE_NAME", substance)
-    res = res.replace("SUBSTANCE_DESC", substance.upper())
-    res = res.replace("MRTG_ID", mrtg_id)
-    res = res.replace("SPIDER_ID", str(id))
-    maxbytes = 200
-    absmax = 300
-    if (substance == "pm10"):
-        maxbytes = 160
-        absmax = 500
-    if (substance == "co"):
-        maxbytes = 3000
-        absmax = 5000
-    res = res.replace("MAXBYTES", str(maxbytes))
-    res = res.replace("ABSMAX", str(absmax))
-    return res
-
-
-def write_template(filename, template):
-    f = file(filename, 'w')
-    f.write(template)
-    f.close()
-
-
-def write_mrtg_template(filename, workdir, template):
-    if os.path.isfile(filename):
-        f = file(filename, 'a')
-    else:
-        f = file(filename, 'w')
-        f.write("WorkDir: %s\n\n" % (workdir))
-    f.write(template)
-    f.close()
 
 ### initial checks
 if (len(sys.argv) < 10):

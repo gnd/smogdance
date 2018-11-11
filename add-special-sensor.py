@@ -44,52 +44,6 @@ else:
         sys.exit("Bad size parameter: %s\nUsage: ./add-special-sensor.py <name> <link_src> <response_size> <country> <city> <type>" % (sys.argv[4]))
 
 
-def fill_spider_template(template, name, link_src, checks, type):
-    f = file(template, 'r')
-    tmp = f.read()
-    f.close()
-    res = tmp.replace("SPIDER_NAME", name)
-    res = res.replace("LINK_SRC", link_src)
-    outputs = ""
-    if (type == 'bulk'):
-        expected_string_all = []
-        expected_string_safe_all = []
-        remote_string_all = []
-        response_size = int(checks.split('===')[0])
-        checkpoints = checks.split('===')[1]
-        for line in checkpoints.split(";"):
-            expected_string = line.split("--")[0]
-            if (expected_string[0].isdigit()):
-                expected_string_safe = expected_string[1:]
-            else:
-                expected_string_safe = expected_string
-            remote_string = line.split("--")[1]
-            expected_string_all.append(expected_string)
-            expected_string_safe_all.append(expected_string_safe)
-            remote_string_all.append("%s")
-            outputs += "        %s = response.xpath('%s').extract()[1]\n" % (expected_string_safe, remote_string)
-        outputs += "        EXPECTED = '%s'\n" % (' '.join(expected_string_all))
-        outputs += "        REMOTE = \"%s\" %% (%s)\n" % (' '.join(remote_string_all), ','.join(expected_string_safe_all))
-        outputs += "        if ((EXPECTED == REMOTE) and (response.status == 200) and (len(response.text) > %d)):\n" % (response_size)
-        outputs += "            file('%s/%s.html','w').write(response.text)\n" % (TEMP_DIR, name)
-        outputs += '            print "OK"\n'
-        outputs += "        else:\n"
-        outputs += "            if (os.path.isfile('%s/%s.html')):\n" % (TEMP_DIR, name)"
-        outputs += "                os.remove('%s/%s.html')\n" % (TEMP_DIR, name)
-        outputs += '            print "------------------ !!! ------------------"\n'
-        outputs += '            print "Integrity check failed"\n'
-        outputs += '            print "EXPECTED: %s" % (EXPECTED)\n'
-        outputs += '            print "REMOTE: %s" % (REMOTE)\n'
-    res = res.replace("OUTPUTS", outputs)
-    return res
-
-
-def write_template(filename, template):
-    f = file(filename, 'w')
-    f.write(template)
-    f.close()
-
-
 ### initial checks
 if (len(sys.argv) < PARAMS):
     sys.exit("Not enough parameters")
@@ -131,5 +85,5 @@ if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
 ### create new sensor spider on disk
 spider_name = "special-%s" % (name)
 spider_file = "%s/%s/%s.py" % (SPIDER_DIR, country, spider_name)
-template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, checks, type)
+template = fill_special_spider_template(SPIDER_TEMPLATE, name, link_src, checks, type)
 write_template(spider_file, template)

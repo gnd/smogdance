@@ -137,9 +137,18 @@ for file in os.listdir(mrtg_workdir):
 # indexmaker --title="Brno PM10 Levels (<a href=no2.html>NO2</a>  <a href=o3.html>O3</a> <a href=pm25.html>PM25</a>)" --nolegend cz/brno/pm10.cfg
 for substance in substances.split():
     links = ""
+    index_sub = 'pm10'
+    if 'pm10' in sensor_substances:
+        index_sub = 'pm10'
+    elif 'pm25' in sensor_substances:
+        index_sub = 'pm25'
+    elif 'co' in sensor_substances:
+        index_sub = 'co'
+    elif 'o3' in sensor_substances:
+        index_sub = 'o3'
     for sub in sensor_substances:
         if (sub != substance):
-            if (sub == 'pm10'):
+            if (sub == index_sub):
                 links += "<a href=index.html>%s</a> " % (sub.upper())
             else:
                 links += "<a href=%s.html>%s</a> " % (sub, sub.upper())

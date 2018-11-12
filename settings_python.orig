@@ -22,11 +22,14 @@ DEFINITIONS_DIR =
 # Main stats dir
 STATS_DIR =
 
+# Deleted stats dir
+DEL_STATS_DIR =
+
 # Temp dir
 TEMP_DIR =
 
 # URL for the stats (without http(s):// and trailing slash)
-STATS_URL = 
+STATS_URL =
 
 # Location of the spider template
 SPIDER_TEMPLATE = template.spider

@@ -19,7 +19,6 @@ def fill_spider_template(TEMP_DIR, template, name, link_src, link_xpaths):
     ### build some outputs
     outputs = ""
     substances = []
-    print link_xpaths
     for line in link_xpaths.split(";"):
         tmp = ""
         substance = line.split("--")[0]

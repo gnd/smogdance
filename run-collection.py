@@ -197,7 +197,7 @@ for sensor in sensors:
                     out = process.communicate()
                 except:
                     print "ERROR Couldnt report sensor state change:\n"
-                    print "%s" % sys.exc_info()[1]
+                    print "%s %s %s" % sys.exc_info()
                     pass
         else:
             if (sensor_last_state == 1):

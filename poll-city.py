@@ -54,13 +54,14 @@ except:
     sys.exit("Something went wrong: " + query)
 
 table = []
-table.append(["city","name"] + all_substances)
+table.append(["id","city","name"] + all_substances)
 ### get last data for the sensors
 for line in cur.fetchall():
     row = []
     sensor_id = line[0]
     name = line[1]
     sensor_substances = line[2]
+    row.append(sensor_id)
     row.append(city)
     row.append(name)
     query_substances = ', '.join([str(x) for x in all_substances])

@@ -244,6 +244,6 @@ for country in countries:
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (pm10_col, float(city_pm10))
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (pm25_col, float(city_pm25))
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (so2_col, float(city_so2))
-        print "<td width=\"20\" style=\"background-color: %s;\"><a href=chart.php?id=%d>show</a></td>\n" % ("white", id)
+        print "<td width=\"20\" style=\"background-color: %s;\"><a href=chart.php?city=%s>more</a></td>\n" % ("white", city)
         print "</tr>\n"
     print "</table></br><br/>"

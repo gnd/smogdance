@@ -41,6 +41,8 @@ DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DB_TABLE = config.get('database', 'DB_TABLE')
 DATA_TABLE = config.get('database', 'DATA_TABLE')
+DATA_TABLE_TEMP = config.get('database', 'DATA_TABLE_TEMP')
+DATA_TABLE_MONTH = config.get('database', 'DATA_TABLE_MONTH')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
@@ -219,7 +221,7 @@ for sensor in sensors:
         temp_values = substance_values.replace("NULL","0").split(",")
         for i in range(len(sensor_substances)):
             update_string += sensor_substances[i] + "=\"" + temp_values[i]+ "\", "
-        query = "UPDATE %s_temp SET % stimestamp = now() WHERE sensor_id = %d" % (DATA_TABLE, update_string, sensor_id)
+        query = "UPDATE %s SET % stimestamp = now() WHERE sensor_id = %d" % (DATA_TABLE_TEMP, update_string, sensor_id)
         cur.execute(query)
         # long term storage
         query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE, substance_names, sensor_id, substance_values)

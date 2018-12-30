@@ -5,6 +5,8 @@ DB_USER =
 DB_PASS =
 DB_TABLE =
 DATA_TABLE =
+DATA_TABLE_TEMP =
+DATA_TABLE_MONTH =
 
 [globals]
 # Scrapy binary location

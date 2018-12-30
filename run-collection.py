@@ -223,6 +223,9 @@ for sensor in sensors:
             update_string += sensor_substances[i] + "=\"" + temp_values[i]+ "\", "
         query = "UPDATE %s SET % stimestamp = now() WHERE sensor_id = %d" % (DATA_TABLE_TEMP, update_string, sensor_id)
         cur.execute(query)
+        # last month storage
+        query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE_MONTH, substance_names, sensor_id, substance_values)
+        cur.execute(query)
         # long term storage
         query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE, substance_names, sensor_id, substance_values)
         cur.execute(query)

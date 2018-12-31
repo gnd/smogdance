@@ -84,7 +84,7 @@ for country in countries:
     for res in cur.fetchall():
         city = res[0]
         link = res[1]
-        query = "SELECT DISTINCT id from %s WHERE city = '%s' order by id" % (DB_TABLE, city)
+        query = "SELECT DISTINCT id, name from %s WHERE city = '%s' order by id" % (DB_TABLE, city)
         cur.execute(query)
         city_co = 0
         city_no2 = 0
@@ -98,8 +98,11 @@ for country in countries:
         sensors_pm10 = 0
         sensors_pm25 = 0
         sensors_so2 = 0
-        for id in cur.fetchall():
-            id = id[0]
+        sensor_link_string = ""
+        for res in cur.fetchall():
+            id = res[0]
+            name = res[1]
+            sensor_link_string += "<a href=chart.php?id=%s>%s</a>, " % (id, name)
             query = "SELECT * from %s_temp WHERE sensor_id = %s" % (DATA_TABLE, id)
             cur.execute(query)
             co = 0
@@ -244,6 +247,6 @@ for country in countries:
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (pm10_col, float(city_pm10))
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (pm25_col, float(city_pm25))
         print "<td width=\"20\" style=\"background-color: %s;\">%02d</td>\n" % (so2_col, float(city_so2))
-        print "<td width=\"20\" style=\"background-color: %s;\"><a href=chart.php?city=%s>more</a></td>\n" % ("white", city)
+        print "<td width=\"90%%\" style=\"background-color: %s; font-size: 15px;\">sensors: %s<a href=chart.php?city=%s>ALL</a></td>\n" % ("white", sensor_link_string, city)
         print "</tr>\n"
     print "</table></br><br/>"

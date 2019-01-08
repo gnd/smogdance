@@ -53,6 +53,7 @@ cur = db.cursor()
 ##### List all sensors (this might get very big very soon)
 #####
 
+print "Countries: </br>"
 countries = []
 query = "SELECT DISTINCT country FROM %s ORDER BY country" % (DB_TABLE)
 cur.execute(query)
@@ -69,7 +70,7 @@ for country in cur.fetchall():
         cur.execute(query)
         for id in cur.fetchall():
             sensor_ids += 1
-    print "<a href=\"#%s\">%s</a> (%d cities, %d sensors) " % (country[0], country[0].upper(), cities, sensor_ids)
+    print "<a href=\"#%s\">%s</a> (%d cities, %d sensors) <br/>" % (country[0], country[0].upper(), cities, sensor_ids)
 print "<br/><br/>"
 
 

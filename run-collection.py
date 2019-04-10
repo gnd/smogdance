@@ -83,7 +83,7 @@ else:
 
         ### if non-zero return, or err_out we have a problem
         if ((returncode != 0) or (err_out != "")):
-            print "Spider %s/special-%s failed: %s" % (sensor_country, sensor_name, out[1])
+            print "Spider %s/special-%s failed: %s" % (sensor_country, sensor_name, err_out[1])
             if (sensor_last_state == 0):
                 print "Setting sensor %s state as 1" % (sensor_id)
                 ### 0 is ok 1 is failed

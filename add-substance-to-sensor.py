@@ -6,7 +6,7 @@
     An open-source collection of scripts to collect, store and graph air quality data
     from publicly available sources.
 
-    This removes substance(s) from a existing sensor.
+    This adds substance(s) from a existing sensor.
     Step-by-step it:
         - add substance(s) from the sensor description in the db (substances and xpaths)
         - for each added substance, mrtg substance.cfg is modified or created (city-local_id_substance)

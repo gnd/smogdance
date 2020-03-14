@@ -129,10 +129,11 @@ for xpath in old_xpaths:
 for subcol in add_substances:
     sub = subcol.split(":")[0]
     if sub not in old_substances:
+        # Slovak sensors
         if (xpath_modifier == 'n'):
             col = int(subcol.split(":")[1])
             rownum = int(old_xpaths[0].split("--")[1].split('tr[')[1].split("]")[0])
-            xpath = '//table[@class="black w600 center"]/tr[%d]/td[%d]//text()' % (rownum, col)
+            xpath = '//table[@class="black w600 center"][1]/tr[%d]/td[%d]//text()' % (rownum, col)
             new_xpaths.append("%s--%s--%s" % (sub, xpath, xpath_modifier))
         if (xpath_modifier == 'cz_chmi'):
             col = int(subcol.split(":")[1])

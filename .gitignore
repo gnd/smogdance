@@ -5,3 +5,4 @@ settings_bash
 settings_python
 temp/
 test/
+*.pyc

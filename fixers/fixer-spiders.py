@@ -6,7 +6,7 @@
     An open-source collection of scripts to collect, store and graph air quality data
     from publicly available sources.
 
-    This polls SQL for the latest values of all sensors from a given city.
+    Recreates spiders according to actual db data
 
     gnd, 2017 - 2018
 """
@@ -23,10 +23,11 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from smog_functions import *
 
 ### load config
-settings_file = os.path.join(sys.path[0], 'settings_python')
+settings_file = os.path.join(sys.path[0], '../settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 DATA_DIR = config.get('globals', 'DATA_DIR')
+TEMP_DIR = config.get('globals', 'TEMP_DIR')
 STATS_DIR = config.get('globals', 'STATS_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
@@ -45,8 +46,8 @@ DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 cur = db.cursor()
 
-# get all AT sensors  -- fixing AT - 26.2.2018
-query = "SELECT local_id, name, country, city, link_src, link_xpaths FROM %s WHERE country = 'pl' and type ='hourly' ORDER BY id" % (DB_TABLE)
+# Run the recreate
+query = "SELECT local_id, name, country, city, link_src, link_xpaths FROM %s WHERE country = 'sk' and type ='hourly' ORDER BY id" % (DB_TABLE)
 try:
     cur.execute(query)
 except:
@@ -69,5 +70,5 @@ for line in cur.fetchall():
 
     ### create the new spider file
     spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, spider_name)
-    template = fill_spider_template(SPIDER_TEMPLATE, name, link_src, link_xpaths)
+    template = fill_spider_template(TEMP_DIR, SPIDER_TEMPLATE, name, link_src, link_xpaths)
     write_template(spider_file, template)

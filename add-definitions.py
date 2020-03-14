@@ -24,6 +24,7 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 SCRAPY_BIN = config.get('globals', 'SCRAPY_BIN')
 DATA_DIR = config.get('globals', 'DATA_DIR')
+TEMP_DIR = config.get('globals', 'TEMP_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 
 ### connect to the db
@@ -79,6 +80,7 @@ elif (task == 'normal'):
                 f.close()
                 print "Importing definitions from %s" % (def_file)
                 for line in definitions:
+                    line = line.replace('TEMP_DIR', TEMP_DIR)
                     import_cmd = "%s/add-sensor.py %s" % (DATA_DIR, line)
                     import_args = shlex.split(import_cmd)
 
@@ -101,6 +103,7 @@ elif (task == 'normal'):
                 f.close()
                 print "Importing definitions from %s" % (def_file)
                 for line in definitions:
+                    line = line.replace('TEMP_DIR', TEMP_DIR)
                     import_cmd = "%s/add-sensor.py %s" % (DATA_DIR, line)
                     import_args = shlex.split(import_cmd)
 

@@ -216,6 +216,7 @@ for sensor in sensors:
         substance_values = substance_values.replace("None", "NULL")
         substance_values = substance_values.replace("**", "NULL")
         substance_values = substance_values.replace("*", "NULL")
+        substance_values = substance_values.replace("PDL", "NULL")
         # temp data table keeping just the last record for every sensor
         update_string = ""
         temp_values = substance_values.replace("NULL","0").split(",")

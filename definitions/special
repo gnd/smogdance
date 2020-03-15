@@ -1,4 +1,4 @@
-chmi 'http://portal.chmi.cz/files/portal/docs/uoco/web_generator/actual_hour_data_CZ.html' '' 230000 cz none bulk
+chmi 'http://portal.chmi.cz/files/portal/docs/uoco/web_generator/actual_hour_data_CZ.html' '' 190000 cz none bulk
 shmu 'http://www.shmu.sk/sk/?page=1&id=oko_imis' '' 55000 sk none bulk
 chmi-at 'http://portal.chmi.cz/files/portal/docs/uoco/web_generator/actual_hour_data_CZ.html' '' 230000 at none bulk
 chmi-pl 'http://portal.chmi.cz/files/portal/docs/uoco/web_generator/actual_hour_data_CZ.html' '' 230000 pl none bulk

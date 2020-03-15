@@ -58,12 +58,16 @@ except:
 for line in cur.fetchall():
     id = line[0]
     xpaths = line[1]
-    #xpaths = xpaths.replace(':6-',':5-')
-    #xpaths = xpaths.replace(':7-',':6-')
-    #xpaths = xpaths.replace(':8-',':7-')
-    #xpaths = xpaths.replace(':9-',':8-')
-    xpaths = xpaths.replace(':11-',':9-')
-    xpaths = xpaths.replace(':13-',':11-')
+    xpaths = xpaths.replace(':6-',':5-')
+    xpaths = xpaths.replace(':7-',':6-')
+    xpaths = xpaths.replace(':8-',':7-')
+    xpaths_arr = xpaths.split(';')
+    for xpath in xpaths_arr:
+        if 'pm10' in xpath:
+            xpath = xpath.replace(':9-',':8-')
+    xpaths = ';'.join(xpaths_arr)
+    #xpaths = xpaths.replace(':11-',':9-')
+    #xpaths = xpaths.replace(':13-',':11-')
     query = "UPDATE %s set link_xpaths = '%s' WHERE id = %d" % (DB_TABLE, xpaths, id)
     try:
         cur.execute(query)

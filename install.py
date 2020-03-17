@@ -39,7 +39,9 @@ db_user = raw_input("Please provide db user: ")
 db_name = raw_input("Please provide db name: ")
 db_pass = raw_input("Please provide db pass: ")
 db_table = "sensors"
+db_tabl_del = "sensors_deleted"
 data_table = "sensor_data"
+data_table_del = "sensor_data_deleted"
 config.set('database', 'DB_HOST', db_host)
 config.set('database', 'DB_NAME', db_name)
 config.set('database', 'DB_USER', db_user)
@@ -139,6 +141,32 @@ if not db_err:
             print "Creating table %s failed: %s" % (db_table, e)
             table_err = True
 
+        ## create the sensor_deleted table
+        query = ("CREATE TABLE %s ("
+        "id int AUTO_INCREMENT PRIMARY KEY, "
+        "local_id int, "
+        "name varchar(255), "
+        "link_src varchar(255), "
+        "link_web varchar(255), "
+        "link_stat varchar(255), "
+        "link_xpaths text, "
+        "country varchar(255), "
+        "city varchar(255), "
+        "gps varchar(255), "
+        "type varchar(255), "
+        "substances varchar(255), "
+        "added timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, "
+        "last_run timestamp NULL on update CURRENT_TIMESTAMP, "
+        "last_state int, "
+        "active int"
+        ")" % (db_table_del))
+        print "Creating table %s: %s" % (db_table_del, query)
+        try:
+            cur.execute(query)
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            print "Creating table %s failed: %s" % (db_table_del, e)
+            table_err = True
+
         ## create the sensor data table
         query = ("CREATE TABLE %s ("
         "sensor_id int, "
@@ -155,6 +183,24 @@ if not db_err:
             cur.execute(query)
         except (MySQLdb.Error, MySQLdb.Warning) as e:
             print "Creating table %s failed: %s" % (data_table, e)
+            table_err = True
+
+        ## create the sensor data deleted table
+        query = ("CREATE TABLE %s ("
+        "sensor_id int, "
+        "timestamp timestamp default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP, "
+        "co float, "
+        "no2 float, "
+        "o3 float, "
+        "pm10 float, "
+        "pm25 float, "
+        "so2 float"
+        ")" % (data_table_del))
+        print "Creating table %s: %s" % (data_table_del, query)
+        try:
+            cur.execute(query)
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            print "Creating table %s failed: %s" % (data_table_del, e)
             table_err = True
 
         ## create the temporary sensor data table

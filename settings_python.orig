@@ -25,7 +25,7 @@ DEFINITIONS_DIR =
 STATS_DIR =
 
 # Deleted stats dir
-DEL_STATS_DIR =
+STATS_DIR_DEL =
 
 # Temp dir
 TEMP_DIR =

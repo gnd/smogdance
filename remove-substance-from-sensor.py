@@ -33,7 +33,7 @@ SCRAPY_BIN = config.get('globals', 'SCRAPY_BIN')
 DATA_DIR = config.get('globals', 'DATA_DIR')
 TEMP_DIR = config.get('globals', 'TEMP_DIR')
 STATS_DIR = config.get('globals', 'STATS_DIR')
-DEL_STATS_DIR = config.get('globals', 'DEL_STATS_DIR')
+STATS_DIR_DEL = config.get('globals', 'STATS_DIR_DEL')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
 SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
@@ -148,17 +148,17 @@ for sub in delete_substances:
             f.close()
 
 ### Move city-local_id-substance* files from stats into stats_deleted folder
-if (not os.path.isdir("%s" % (DEL_STATS_DIR))):
-    os.makedirs("%s" % (DEL_STATS_DIR))
-if (not os.path.isdir("%s/%s" % (DEL_STATS_DIR, country))):
-    os.makedirs("%s/%s" % (DEL_STATS_DIR, country))
-if (not os.path.isdir("%s/%s/%s" % (DEL_STATS_DIR, country, city_dir))):
-    os.makedirs("%s/%s/%s" % (DEL_STATS_DIR, country, city_dir))
+if (not os.path.isdir("%s" % (STATS_DIR_DEL))):
+    os.makedirs("%s" % (STATS_DIR_DEL))
+if (not os.path.isdir("%s/%s" % (STATS_DIR_DEL, country))):
+    os.makedirs("%s/%s" % (STATS_DIR_DEL, country))
+if (not os.path.isdir("%s/%s/%s" % (STATS_DIR_DEL, country, city_dir))):
+    os.makedirs("%s/%s/%s" % (STATS_DIR_DEL, country, city_dir))
 
 # Now move all files called like city-local_id-substance*
 for sub in delete_substances:
     old_dir = "%s/%s/%s" % (STATS_DIR, country, city_dir)
-    new_dir = "%s/%s/%s" % (DEL_STATS_DIR, country, city_dir)
+    new_dir = "%s/%s/%s" % (STATS_DIR_DEL, country, city_dir)
     pattern = "%s-%s_%s" % (city, local_id, sub)
     files = [f for f in os.listdir(old_dir) if os.path.isfile(os.path.join(old_dir, f))]
     for file in files:

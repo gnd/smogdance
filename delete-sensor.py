@@ -31,7 +31,7 @@ settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 STATS_DIR = config.get('globals', 'STATS_DIR')
-STATS_DIR_DEL = config.get('globals', 'STATS_DIR')
+STATS_DIR_DEL = config.get('globals', 'STATS_DIR_DEL')
 
 ### connect to the db
 DB_HOST = config.get('database', 'DB_HOST')
@@ -45,12 +45,16 @@ DATA_TABLE_DEL = config.get('database', 'DATA_TABLE_DEL')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
-### check input TODO (sanitize like in poll-city)
+### check input
 sensor_id = ""
 if (len(sys.argv) > 1):
-    sensor_id = int(sys.argv[1])
+    if (sys.sargv[1].isdigit()):
+        sensor_id = int(sys.argv[1])
+    else:
+        sys.exit("Sensor id must be an integer")
 else:
     sys.exit("Not enough parameters")
+
 
 #####
 ##### Get sensor params
@@ -65,11 +69,13 @@ for line in cur.fetchall():
     substances = line[4]
     city_dir = city.replace(" ", "_")
 
+
 #####
 ##### Move sensor definition into sensors_deleted
 #####
 query = "INSERT INTO %s SELECT * FROM %s WHERE id = '%d'" % (DB_TABLE_DEL, DB_TABLE, sensor_id)
 try:
+    print "Moving db sensor definitions"
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
@@ -81,6 +87,7 @@ db.commit()
 #####
 query = "DELETE FROM %s WHERE id = '%d'" % (DB_TABLE, sensor_id)
 try:
+    print "Deleting db sensor definitions"
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
@@ -92,6 +99,7 @@ db.commit()
 #####
 query = "INSERT INTO %s SELECT * FROM %s WHERE sensor_id = '%d'" % (DATA_TABLE_DEL, DATA_TABLE, sensor_id)
 try:
+    print "Moving db sensor data"
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
@@ -103,6 +111,7 @@ db.commit()
 #####
 query = "DELETE FROM %s WHERE sensor_id = '%d'" % (DATA_TABLE, sensor_id)
 try:
+    print "Deleting db sensor data"
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
@@ -113,7 +122,7 @@ db.commit()
 ##### Delete spider file from disk
 #####
 spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, local_id)
-print "Removing spider file from disk"
+print "Removing spider file %s from disk" % (spider_file)
 try:
     os.remove(spider_file)
 except:
@@ -124,7 +133,7 @@ except:
 ##### Recreate or delete local ids, spider files
 #####
 # Determine how many sensors from the city are left
-query = "SELECT count(local_id) FROM %s WHERE city = '%s'" % (DB_TABLE, city)
+query = "SELECT count(id) FROM %s WHERE city = '%s'" % (DB_TABLE, city)
 try:
     cur.execute(query)
 except:
@@ -132,8 +141,8 @@ except:
 res = cur.fetchone()
 sensor_count = res[0]
 
-# If this wasnt the last sensor, renumber the leftover sensors
-if (sensor_count > 0):
+# If this wasnt the last sensor in the city, renumber the leftover sensors
+if ((sensor_count > 0) and (local_id < sensor_count)):
     id_mapping = {}
     city_substances = []
     new_local_id = 0
@@ -183,7 +192,7 @@ if (sensor_count > 0):
         new_local_id++
 
 # If this was the last sensor, delete the directory and all its contents
-else:
+if (sensor_count == 0):
     sensor_city_dir = "%s/%s/%s" % (SPIDER_DIR, country, city_dir)
     files = [f for f in os.listdir(sensor_city_dir) if os.path.isfile(os.path.join(sensor_city_dir, f))]
     for file in files:
@@ -194,7 +203,7 @@ else:
 #####
 ##### Regenerate mrtg config files with new local ids
 #####
-if ((sensor_count > 0) and (local_id < sensor_count-1)):
+if ((sensor_count > 0) and (local_id < sensor_count)):
     # Delete old mrtg config files
     for substance in city_substances.split():
         mrtg_name = "%s.cfg" % (substance)
@@ -221,6 +230,7 @@ if ((sensor_count > 0) and (local_id < sensor_count-1)):
             template = fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, MRTG_TEMPLATE, temp_id, temp_local_id, temp_name, city, country, temp_substance)
             write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
+
 #####
 ##### Remove city from mrtg runlist if last sensor
 #####
@@ -239,6 +249,7 @@ if (sensor_count == 0):
                 f.write()
         f.close()
 
+
 #####
 ##### Move mrtg data for deleted sensor
 #####
@@ -249,7 +260,6 @@ if (not os.path.isdir("%s/%s" % (STATS_DIR_DEL, country))):
     os.makedirs("%s/%s" % (STATS_DIR_DEL, country))
 if (not os.path.isdir("%s/%s/%s" % (STATS_DIR_DEL, country, city_dir))):
     os.makedirs("%s/%s/%s" % (STATS_DIR_DEL, country, city_dir))
-
 # Now move all files called like city-local_id*
 for sub in substances:
     old_dir = "%s/%s/%s" % (STATS_DIR, country, city_dir)
@@ -265,19 +275,18 @@ for sub in substances:
 #####
 ##### Rename mrtg data for leftover sensors
 #####
-if ((sensor_count > 0) and (local_id < sensor_count-1)):
+if ((sensor_count > 0) and (local_id < sensor_count)):
     old_dir = "%s/%s/%s" % (STATS_DIR, country, city_dir)
-    if (sensor_count > 0):
-        for former_id, new_id in id_mapping.iteritems():
-            pattern = "%s-%s.*\.(png|log|old)" % (city, former_id)
-            files = [f for f in os.listdir(old_dir) if os.path.isfile(os.path.join(old_dir, f))]
-            for file in files:
-                if re.match(pattern, file):
-                    name_root = "%s-%s" % (city, new_id)
-                    name_tail = file.split('_')[1]
-                    new_name = "%s_%s" % (name_root, name_tail)
-                    print "Renaming %s to %s" (file, new_name)
-                    os.rename("%s/%s" % (old_dir, file), "%s/%s" % (old_dir, new_name))
+    for old_id, new_id in id_mapping.iteritems():
+        pattern = "%s-%s.*\.(png|log|old)" % (city, old_id)
+        files = [f for f in os.listdir(old_dir) if os.path.isfile(os.path.join(old_dir, f))]
+        for file in files:
+            if re.match(pattern, file):
+                name_root = "%s-%s" % (city, new_id)
+                name_tail = file.split('_')[1]
+                new_name = "%s_%s" % (name_root, name_tail)
+                print "Renaming %s to %s" (file, new_name)
+                os.rename("%s/%s" % (old_dir, file), "%s/%s" % (old_dir, new_name))
 
 
 #####
@@ -335,6 +344,7 @@ if (sensor_count > 0):
             print "Something went wrong: %s" % (out[1])
         else:
             print "mrtg index for %s created" % (substance)
+
 
 #####
 ##### Done

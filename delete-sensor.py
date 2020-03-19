@@ -262,14 +262,15 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
 ##### Remove city from mrtg runlist if last sensor
 #####
 if (sensor_count == 0):
-    if (os.path.isfile("%s/%s" % (DATA_DIR, 'mrtg.runlist'))):
+    runlist = "%s/%s" % (DATA_DIR, 'mrtg.runlist')
+    if (os.path.isfile(runlist)):
         # Read runlist
-        f = file("%s/%s" % (DATA_DIR, 'mrtg.runlist'), 'r')
+        f = file(runlist, 'r')
         lines = f.readlines()
         f.close()
 
         # Write new runlist
-        f = file("%s/%s" % (DATA_DIR, 'mrtg.runlist'), 'w')
+        f = file(runlist, 'w')
         for line in lines:
             runlist_name = "%s/%s\n" % (country, city_dir)
             if (runlist_name not in line):

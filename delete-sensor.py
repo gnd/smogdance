@@ -154,8 +154,8 @@ try:
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
-line = cur.fetchone():
-temp_substances_arr = line.split()
+line = cur.fetchone()
+temp_substances = line[0].split()
 for temp_substance in temp_substances:
     if temp_substance not in city_substances:
         city_substances.append(temp_substance)

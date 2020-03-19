@@ -283,7 +283,7 @@ if (sensor_count == 0):
         for line in lines:
             runlist_name = "%s/%s\n" % (country, city_dir)
             if (runlist_name not in line):
-                f.write()
+                f.write(line)
         f.close()
 
 

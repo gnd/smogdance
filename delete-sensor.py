@@ -11,7 +11,7 @@
         - moves all historical data associated with the sensor from sensors_data to sensors_data_deleted
         - deletes sensor spiderfile from the disk
         - recreates the city's sensor local id's (or deletes the city spider dir if only sensor)
-        - recreates the city's mrtg directory (or deletes it if only sensor) TODO
+        - recreates the city's mrtg directory (or deletes it if only sensor)
 
     gnd, 2017 - 2020
 """
@@ -30,8 +30,14 @@ import ConfigParser
 settings_file = os.path.join(sys.path[0], 'settings_python')
 config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
+DATA_DIR = config.get('globals', 'DATA_DIR')
+TEMP_DIR = config.get('globals', 'TEMP_DIR')
 STATS_DIR = config.get('globals', 'STATS_DIR')
 STATS_DIR_DEL = config.get('globals', 'STATS_DIR_DEL')
+SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
+MRTG_TEMPLATE = config.get('globals', 'MRTG_TEMPLATE')
+SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
+SPIDER_COMMAND = config.get('globals', 'SPIDER_COMMAND')
 
 ### connect to the db
 DB_HOST = config.get('database', 'DB_HOST')
@@ -45,15 +51,25 @@ DATA_TABLE_DEL = config.get('database', 'DATA_TABLE_DEL')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
 cur = db.cursor()
 
+### Import Smog functions
+from smog_functions import *
+
+def usage():
+    print "Usage: delete-sensor.py <sensor_id>"
+
 ### check input
 sensor_id = ""
 if (len(sys.argv) > 1):
-    if (sys.sargv[1].isdigit()):
+    if (sys.argv[1].isdigit()):
         sensor_id = int(sys.argv[1])
     else:
         sys.exit("Sensor id must be an integer")
+        usage()
+        sys.exit()
 else:
-    sys.exit("Not enough parameters")
+    print("Not enough parameters")
+    usage()
+    sys.exit()
 
 
 #####
@@ -122,8 +138,8 @@ db.commit()
 ##### Delete spider file from disk
 #####
 spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, local_id)
-print "Removing spider file %s from disk" % (spider_file)
 try:
+    print "Removing spider file %s" % (spider_file)
     os.remove(spider_file)
 except:
     sys.exit("Something went wrong when removing: " + spider_file)
@@ -140,6 +156,8 @@ except:
     sys.exit("Something went wrong: " + query)
 res = cur.fetchone()
 sensor_count = res[0]
+print "%d sensors remaining for %s" % (sensor_count, city)
+
 
 # If this wasnt the last sensor in the city, renumber the leftover sensors
 if ((sensor_count > 0) and (local_id < sensor_count)):
@@ -156,6 +174,10 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
         old_local_id = line[1]
         temp_substances = line[2]
         query = "UPDATE %s SET local_id = %d WHERE id = '%d'" % (DB_TABLE, new_local_id, temp_sensor_id)
+        try:
+            cur.execute(query)
+        except:
+            sys.exit("Something went wrong: " + query)
         db.commit()
 
         # Create a list of all city substances to be used later
@@ -168,36 +190,40 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
         sensor_city_dir = "%s/%s/%s" % (SPIDER_DIR, country, city_dir)
         files = [f for f in os.listdir(sensor_city_dir) if os.path.isfile(os.path.join(sensor_city_dir, f))]
         for file in files:
-            if ((".py" in file) or (".pyc" in file):
-                os.remove(file)
-
-        # Regenerate spiderfiles
-        query = "SELECT local_id, name, link_src, link_xpaths FROM %s WHERE city = '%s' AND type ='hourly' ORDER BY id" % (DB_TABLE, city)
-        try:
-            cur.execute(query)
-        except:
-            sys.exit("Something went wrong: " + query)
-        ### create new sensor spider on disk
-        for line in cur.fetchall():
-            temp_local_id = line[0]
-            temp_name = line[1]
-            temp_link_src = line[2]
-            temp_link_xpaths = line[3]
-            temp_spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, temp_local_id)
-            template = fill_spider_template(TEMP_DIR, SPIDER_TEMPLATE, temp_name, temp_link_src, temp_link_xpaths)
-            write_template(temp_spider_file, template)
+            if ((".py" in file) or (".pyc" in file)):
+                os.remove("%s/%s" % (sensor_city_dir, file))
 
         # store mapping
         id_mapping[old_local_id] = new_local_id
-        new_local_id++
+        new_local_id += 1
 
 # If this was the last sensor, delete the directory and all its contents
 if (sensor_count == 0):
     sensor_city_dir = "%s/%s/%s" % (SPIDER_DIR, country, city_dir)
     files = [f for f in os.listdir(sensor_city_dir) if os.path.isfile(os.path.join(sensor_city_dir, f))]
     for file in files:
-        os.remove(file)
+        os.remove("%s/%s" % (sensor_city_dir, file))
     os.rmdir(sensor_city_dir)
+
+
+#####
+##### Regenerate spiderfiles
+#####
+if ((sensor_count > 0) and (local_id < sensor_count)):
+    query = "SELECT local_id, name, link_src, link_xpaths FROM %s WHERE city = '%s' ORDER BY id" % (DB_TABLE, city)
+    try:
+        cur.execute(query)
+    except:
+        sys.exit("Something went wrong: " + query)
+    ### create new sensor spider on disk
+    for line in cur.fetchall():
+        temp_local_id = line[0]
+        temp_name = line[1]
+        temp_link_src = line[2]
+        temp_link_xpaths = line[3]
+        temp_spider_file = "%s/%s/%s/%s.py" % (SPIDER_DIR, country, city_dir, temp_local_id)
+        template = fill_spider_template(TEMP_DIR, SPIDER_TEMPLATE, temp_name, temp_link_src, temp_link_xpaths)
+        write_template(temp_spider_file, template)
 
 
 #####
@@ -205,14 +231,14 @@ if (sensor_count == 0):
 #####
 if ((sensor_count > 0) and (local_id < sensor_count)):
     # Delete old mrtg config files
-    for substance in city_substances.split():
+    for substance in city_substances:
         mrtg_name = "%s.cfg" % (substance)
         mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
         if os.path.isfile(mrtg_file):
-            os.remove(file)
+            os.remove(mrtg_file)
 
     # Now create new mrtg config files
-    query = "SELECT id, local_id, name, substances FROM %s WHERE city = '%s' AND type ='hourly' ORDER BY id" % (DB_TABLE, city)
+    query = "SELECT id, local_id, name, substances FROM %s WHERE city = '%s' ORDER BY id" % (DB_TABLE, city)
     try:
         cur.execute(query)
     except:
@@ -224,10 +250,11 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
         temp_name = line[2]
         temp_substances = line[3]
         for temp_substance in temp_substances.split():
-            mrtg_name = "%s.cfg" % (substance)
+            mrtg_name = "%s.cfg" % (temp_substance)
+            print "Recreating %s" % (mrtg_name)
             mrtg_workdir = "%s/%s/%s/" %(STATS_DIR, country, city_dir)
             mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
-            template = fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, MRTG_TEMPLATE, temp_id, temp_local_id, temp_name, city, country, temp_substance)
+            template = fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, MRTG_TEMPLATE, temp_sensor_id, temp_local_id, temp_name, city, country, temp_substance)
             write_mrtg_template(mrtg_file, mrtg_workdir, template)
 
 
@@ -285,7 +312,7 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
                 name_root = "%s-%s" % (city, new_id)
                 name_tail = file.split('_')[1]
                 new_name = "%s_%s" % (name_root, name_tail)
-                print "Renaming %s to %s" (file, new_name)
+                print "Renaming %s to %s" % (file, new_name)
                 os.rename("%s/%s" % (old_dir, file), "%s/%s" % (old_dir, new_name))
 
 
@@ -295,11 +322,6 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
 ### create index with indexmaker
 if (sensor_count > 0):
     mrtg_statdir = "%s/%s/%s/" %(STATS_DIR, country, city_dir)
-    # move mrtg data for old sensor
-    for file in os.listdir(mrtg_statdir):
-        if file(".html"):
-            os.remove("%s/%s" % (mrtg_statdir, file))
-
     # remove old index files
     for file in os.listdir(mrtg_statdir):
         if file.endswith(".html"):
@@ -349,4 +371,4 @@ if (sensor_count > 0):
 #####
 ##### Done
 #####
-print "Sensor %s from %s with local_id %d and id %d deleted." % (name, city, local_id, id)
+print "Sensor %s from %s with local_id %d and id %d deleted." % (name, city, local_id, sensor_id)

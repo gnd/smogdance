@@ -15,7 +15,7 @@
     - if a gives wrong output, it is marked as problematic, if on the next readings
     the problem repeats the sensor is made inactive and a notification mail is sent.
 
-    gnd, 2017 - 2018
+    gnd, 2017 - 2020
 """
 
 import os
@@ -91,7 +91,7 @@ else:
                 cur.execute(query)
                 ### notify
                 try:
-                    notify_cmd = "%s/report-state-change.sh %s %s" % (DATA_DIR, sensor_name, "failed")
+                    notify_cmd = "%s/report-state-change.sh %s %s" % (DATA_DIR, sensor_name, "failed first time")
                     notify_args = shlex.split(notify_cmd)
                     process = subprocess.Popen(notify_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     process.communicate()
@@ -100,7 +100,7 @@ else:
                     print "%s" % sys.exc_info()[1]
                     pass
 
-            ### will not disable sensors for the time-being
+            ### disable sensor and report
             if (sensor_last_state == 1):
                 print "setting sensor %s as inactive" % (sensor_id)
                 ### 0 is ok 1 is failed, mark as inactive
@@ -127,10 +127,10 @@ else:
             db.commit()
             print ".. OK"
 
+
 #####
 ##### Run normal sensors
 #####
-
 sensors = []
 query = "SELECT id, local_id, country, city, last_state, substances, type FROM %s where active = 1 and (type = 'hourly' or type ='hourly-tor') and last_run < (now() - INTERVAL 10 minute)" % (DB_TABLE)
 cur.execute(query)
@@ -173,40 +173,28 @@ for sensor in sensors:
     if ((returncode != 0) or (err_out != "")):
         print "\nSpider %s/%s/%s failed:" % (sensor_country, sensor_city, sensor_local_id)
         print err_out
-        if (sensor_last_state == 0):
-            print "Setting sensor %s state as 1" % (sensor_id)
-            ### 0 is ok 1 is failed
-            query = "UPDATE %s SET last_state = 1 WHERE id = %s" % (DB_TABLE, sensor_id)
+        # On failure increase sensor_last state until it reaches 5 - the report
+        if ((sensor_last_state >= 0) and (sensor_last_state < 5)):
+            print "Sensor %s gets more chances, setting last_state to %d" % (sensor_id, sensor_last_state+1)
+            ### 0 is ok 1 is failed, mark as inactive
+            query = "UPDATE %s SET last_state = %d WHERE id = %s" % (DB_TABLE, sensor_last_state+1, sensor_id)
             cur.execute(query)
-
-        if (sensor_country == 'hu'):
-            if ((sensor_last_state >= 1) and (sensor_last_state < 5)):
-                print "Sensor %s gets more chances, setting last_state to %d" % (sensor_id, sensor_last_state+1)
-                ### 0 is ok 1 is failed, mark as inactive
-                query = "UPDATE %s SET last_state = %d WHERE id = %s" % (DB_TABLE, sensor_last_state+1, sensor_id)
-                cur.execute(query)
-            if (sensor_last_state == 5):
-                print "Setting sensor %s as inactive:" % (sensor_id)
-                ### 0 is ok 1 is failed, mark as inactive
-                query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
-                cur.execute(query)
-                ### notify
-                try:
-                    print "Reporting sensor failure"
-                    notify_cmd = "%s/report-state-change.sh %s %s" % (DATA_DIR, sensor_id, "failed fifth time")
-                    notify_args = shlex.split(notify_cmd)
-                    process = subprocess.Popen(notify_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    out = process.communicate()
-                except:
-                    print "ERROR Couldnt report sensor state change:\n"
-                    print "%s %s %s" % sys.exc_info()
-                    pass
-        else:
-            if (sensor_last_state == 1):
-                print "Setting sensor %s as inactive:" % (sensor_id)
-                ### 0 is ok 1 is failed, mark as inactive
-                query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
-                cur.execute(query)
+        if (sensor_last_state == 5):
+            print "Setting sensor %s as inactive:" % (sensor_id)
+            ### 0 is ok 1 is failed, mark as inactive
+            query = "UPDATE %s SET active = 0 WHERE id = %s" % (DB_TABLE, sensor_id)
+            cur.execute(query)
+            ### notify
+            try:
+                print "Reporting sensor failure"
+                notify_cmd = "%s/report-state-change.sh %s %s" % (DATA_DIR, sensor_id, "failed fifth time")
+                notify_args = shlex.split(notify_cmd)
+                process = subprocess.Popen(notify_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out = process.communicate()
+            except:
+                print "ERROR Couldnt report sensor state change:\n"
+                print "%s %s %s" % sys.exc_info()
+                pass
         db.commit()
 
     ### or store the data in the database
@@ -222,7 +210,7 @@ for sensor in sensors:
         temp_values = substance_values.replace("NULL","0").split(",")
         for i in range(len(sensor_substances)):
             update_string += sensor_substances[i] + "=\"" + temp_values[i]+ "\", "
-        query = "UPDATE %s SET % stimestamp = now() WHERE sensor_id = %d" % (DATA_TABLE_TEMP, update_string, sensor_id)
+        query = "UPDATE %s SET %s timestamp = now() WHERE sensor_id = %d" % (DATA_TABLE_TEMP, update_string, sensor_id)
         cur.execute(query)
         # last month storage
         query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE_MONTH, substance_names, sensor_id, substance_values)
@@ -231,7 +219,7 @@ for sensor in sensors:
         query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, now(), %s)" % (DATA_TABLE, substance_names, sensor_id, substance_values)
         cur.execute(query)
 
-        ### set last state and last_run
+        ### set last_run and reset last_state to zero
         query = "UPDATE %s SET last_state = 0, last_run = now() WHERE id = %s" % (DB_TABLE, sensor_id)
         cur.execute(query)
         db.commit()

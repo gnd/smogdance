@@ -581,15 +581,15 @@ except:
 
 ################ Fix sensor name ###################
 # 0. Rename Ostrava - Ceskobratrsk to Ceskobratrska
-id_to_rename = "113"
-rename_cmd = "%s/rename-sensor.py %s" % (DATA_DIR, id_to_rename)
+line = "113 Ceskobratrska"
+rename_cmd = "%s/rename-sensor.py %s" % (DATA_DIR, line)
 import_args = shlex.split(rename_cmd)
 ### run the rename
 try:
-    print "Trying to run %s/rename-sensor.py %s" % (DATA_DIR, id_to_rename)
+    print "Trying to run %s/rename-sensor.py %s" % (DATA_DIR, line)
     process = subprocess.Popen(import_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = process.communicate()[1]
     if (process.returncode != 0):
         print "Delete failed:\n%s" % (out)
 except:
-    print "Couldnt run %s/rename-sensor.py %s" % (DATA_DIR, id_to_rename)
+    print "Couldnt run %s/rename-sensor.py %s" % (DATA_DIR, line)

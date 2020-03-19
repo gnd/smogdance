@@ -265,12 +265,12 @@ if (sensor_count == 0):
     runlist = "%s/%s" % (DATA_DIR, 'mrtg.runlist')
     if (os.path.isfile(runlist)):
         # Read runlist
-        f = file(runlist, 'r')
+        f = open(runlist, 'r')
         lines = f.readlines()
         f.close()
 
         # Write new runlist
-        f = file(runlist, 'w')
+        f = open(runlist, 'w')
         for line in lines:
             runlist_name = "%s/%s\n" % (country, city_dir)
             if (runlist_name not in line):

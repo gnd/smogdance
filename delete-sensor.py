@@ -146,6 +146,22 @@ except:
 
 
 #####
+##### Deterine city_substances
+#####
+city_substances = []
+query = "SELECT substances FROM %s WHERE city = '%s' ORDER BY local_id" % (DB_TABLE, city)
+try:
+    cur.execute(query)
+except:
+    sys.exit("Something went wrong: " + query)
+line = cur.fetchone():
+temp_substances_arr = line.split()
+for temp_substance in temp_substances:
+    if temp_substance not in city_substances:
+        city_substances.append(temp_substance)
+
+
+#####
 ##### Recreate or delete local ids, spider files
 #####
 # Determine how many sensors from the city are left
@@ -158,13 +174,11 @@ res = cur.fetchone()
 sensor_count = res[0]
 print "%d sensors remaining for %s" % (sensor_count, city)
 
-
 # If this wasnt the last sensor in the city, renumber the leftover sensors
 if ((sensor_count > 0) and (local_id < sensor_count)):
     id_mapping = {}
-    city_substances = []
     new_local_id = 0
-    query = "SELECT id, local_id, substances FROM %s WHERE city = '%s' ORDER BY local_id" % (DB_TABLE, city)
+    query = "SELECT id, local_id FROM %s WHERE city = '%s' ORDER BY local_id" % (DB_TABLE, city)
     try:
         cur.execute(query)
     except:
@@ -172,19 +186,12 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
     for line in cur.fetchall():
         temp_sensor_id = line[0]
         old_local_id = line[1]
-        temp_substances = line[2]
         query = "UPDATE %s SET local_id = %d WHERE id = '%d'" % (DB_TABLE, new_local_id, temp_sensor_id)
         try:
             cur.execute(query)
         except:
             sys.exit("Something went wrong: " + query)
         db.commit()
-
-        # Create a list of all city substances to be used later
-        temp_substances_arr = temp_substances.split()
-        for temp_substance in temp_substances_arr:
-            if temp_substance not in city_substances:
-                city_substances.append(temp_substance)
 
         # Delete old spiderfiles
         sensor_city_dir = "%s/%s/%s" % (SPIDER_DIR, country, city_dir)

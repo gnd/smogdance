@@ -154,11 +154,12 @@ try:
     cur.execute(query)
 except:
     sys.exit("Something went wrong: " + query)
-line = cur.fetchone()
-temp_substances = line[0].split()
-for temp_substance in temp_substances:
-    if temp_substance not in city_substances:
-        city_substances.append(temp_substance)
+for line in cur.fetchall():
+    temp_substances = line[0].split()
+    for temp_substance in temp_substances:
+        if temp_substance not in city_substances:
+            city_substances.append(temp_substance)
+print "Substances for %s: %s" % (city, city_substances)
 
 
 #####
@@ -236,11 +237,12 @@ if ((sensor_count > 0) and (local_id < sensor_count)):
 #####
 ##### Regenerate mrtg config files with new local ids
 #####
-if ((sensor_count > 0) and (local_id < sensor_count)):
+if (sensor_count > 0):
     # Delete old mrtg config files
     for substance in city_substances:
         mrtg_name = "%s.cfg" % (substance)
         mrtg_file = "%s/%s/%s/%s" % (SPIDER_DIR, country, city_dir, mrtg_name)
+        print "Deleting old mrtg config: %s" % (mrtg_file)
         if os.path.isfile(mrtg_file):
             os.remove(mrtg_file)
 

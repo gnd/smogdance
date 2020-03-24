@@ -103,6 +103,23 @@ def fill_special_spider_template(TEMP_DIR, template, name, link_src, checks, typ
     return res
 
 
+def fill_special_spider_template_pl(TEMP_DIR, template, name, decrypt_rounds, decrypt_hashfunc, decrypt_salt, decrypt_iv, link_csrf, link_aqi, data_regexp):
+    f = file(template, 'r')
+    tmp = f.read()
+    f.close()
+    res = tmp.replace("SPIDER_NAME", name)
+    res = res.replace("DECRYPT_ROUNDS", decrypt_rounds)
+    res = res.replace("DECRYPT_HASHFUNC", decrypt_hashfunc)
+    res = res.replace("DECRYPT_SALT", decrypt_salt)
+    res = res.replace("DECRYPT_IV", decrypt_iv)
+    res = res.replace("LINK_CSRF", link_csrf)
+    res = res.replace("LINK_AQI", link_aqi)
+    res = res.replace("DATA_REGEXP", data_regexp)
+    outfile = '%s/%s.json' % (TEMP_DIR, name)
+    res = res.replace("OUTPUT_FILE", outfile)
+    return res
+
+
 def fill_mrtg_template(DATA_DIR, SPIDER_COMMAND, template, id, local_id, name, city, country, substance):
     f = file(template, 'r')
     tmp = f.read()

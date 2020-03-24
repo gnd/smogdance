@@ -12,10 +12,10 @@
 
     Note:
     A special sensor is eg. a sensor that just downloads a bigger
-    chunk of data for later processing, by 'normal' sensors,
+    chunk of data for later processing by 'normal' sensors,
     such as chmi or shmu pages, thus saving total requests sent
 
-    gnd, 2017 - 2018
+    gnd, 2017 - 2020
 """
 
 import os
@@ -33,6 +33,7 @@ PARAMS = 7
 TEMP_DIR = config.get('globals', 'TEMP_DIR')
 SPIDER_DIR = config.get('globals', 'SPIDER_DIR')
 SPIDER_TEMPLATE = config.get('globals', 'SPIDER_TEMPLATE')
+SPIDER_TEMPLATE_PL = config.get('globals', 'SPIDER_TEMPLATE_PL')
 
 ### check if proper arguments
 if (len(sys.argv) < PARAMS):
@@ -86,5 +87,16 @@ if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
 ### create new sensor spider on disk
 spider_name = "special-%s" % (name)
 spider_file = "%s/%s/%s.py" % (SPIDER_DIR, country, spider_name)
-template = fill_special_spider_template(TEMP_DIR, SPIDER_TEMPLATE, name, link_src, checks, type)
+if ((country == 'pl') and (name == 'gios')):
+    param_arr = type.split('--')
+    decrypt_rounds = param_arr[0]
+    decrypt_hashfunc = param_arr[1]
+    decrypt_salt = param_arr[2]
+    decrypt_iv = param_arr[3]
+    link_csrf = link_src
+    link_aqi = param_arr[4]
+    data_regexp = param_arr[5]
+    template = fill_special_spider_template_pl(TEMP_DIR, SPIDER_TEMPLATE_PL, name, decrypt_rounds, decrypt_hashfunc, decrypt_salt, decrypt_iv, link_csrf, link_aqi, data_regexp)
+else:
+    template = fill_special_spider_template(TEMP_DIR, SPIDER_TEMPLATE, name, link_src, checks, type)
 write_template(spider_file, template)

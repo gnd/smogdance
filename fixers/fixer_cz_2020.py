@@ -45,7 +45,7 @@ DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DB_TABLE = config.get('database', 'DB_TABLE')
 DATA_TABLE = config.get('database', 'DATA_TABLE')
-db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
+db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, use_unicode=True, charset="utf8")
 cur = db.cursor()
 
 # 0. replace - :6- > :5- :7- > :6- :8- > :7- :9- > :8- :10- > :9- :11- > :10-

@@ -96,7 +96,7 @@ f.close()
 print "Trying to connect to the database"
 db_err = False
 try:
-    db = MySQLdb.connect(host=db_host, user=db_user, passwd=db_pass, db=db_name)
+    db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, use_unicode=True, charset="utf8")
     cur = db.cursor()
 except:
     print "Could not connect to the database %s on host %s as user %s" % (db_name, db_host, db_user)

@@ -31,7 +31,7 @@ DB_USER = config.get('database', 'DB_USER')
 DB_PASS = config.get('database', 'DB_PASS')
 DB_NAME = config.get('database', 'DB_NAME')
 DATA_TABLE_MONTH = config.get('database', 'DATA_TABLE_MONTH')
-db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME)
+db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, use_unicode=True, charset="utf8")
 cur = db.cursor()
 
 #####

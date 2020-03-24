@@ -6,7 +6,7 @@ DB_PASS =
 DB_TABLE =
 DB_TABLE_DEL =
 DATA_TABLE =
-DATA_TABLE_DEL = 
+DATA_TABLE_DEL =
 DATA_TABLE_TEMP =
 DATA_TABLE_MONTH =
 
@@ -37,6 +37,7 @@ STATS_URL =
 
 # Location of the spider template
 SPIDER_TEMPLATE = template.spider
+SPIDER_TEMPLATE_PL = template_pl.spider
 
 # Location of the MRTG template
 MRTG_TEMPLATE = template.mrtg

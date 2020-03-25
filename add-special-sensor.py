@@ -69,6 +69,9 @@ response_size = int(sys.argv[4])
 country = sys.argv[5]
 city = sys.argv[6]
 type = sys.argv[7]
+if ((country == 'pl') and (name == 'gios')):
+    sensor_params = sys.argv[7]
+    type = 'bulk'
 
 checks = str(response_size) + '===' + checkpoints
 
@@ -88,7 +91,7 @@ if (not os.path.isdir("%s/%s" % (SPIDER_DIR, country))):
 spider_name = "special-%s" % (name)
 spider_file = "%s/%s/%s.py" % (SPIDER_DIR, country, spider_name)
 if ((country == 'pl') and (name == 'gios')):
-    param_arr = type.split('--')
+    param_arr = sensor_params.split('--')
     decrypt_rounds = param_arr[0]
     decrypt_hashfunc = param_arr[1]
     decrypt_salt = param_arr[2]

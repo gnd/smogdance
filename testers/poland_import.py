@@ -42,6 +42,8 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 DATA_DIR = config.get('globals', 'DATA_DIR')
 
+all_substances = ["co","no2","o3","pm10","pm25","so2"]
+
 # decryption settings from http://powietrze.gios.gov.pl/pjp/assets-0.0.31/js/chart.js
 iteration_count = 1000
 hashfunc = 'sha1' # keySize = 128
@@ -94,21 +96,26 @@ class SensorSpider(scrapy.Spider):
                 # Get sensor data
                 sensor_data = []
                 sensor_id = sensor['stationId']
-                city = sensor['stationName'].split(',')[0]
-                name = sensor['stationName'].split(',')[1]
+                city = sensor['stationName'].split(',')[0].strip().lower().replace('ł','l')
+                name = sensor['stationName'].split(',')[1].strip().lower().replace('ł','l')
+                if name == "":
+                    name = city
                 link_src = 'file://127.0.0.1TEMP_DIR/gios.json'
                 link_web = 'http://powietrze.gios.gov.pl/pjp/current/station_details/chart/' + str(sensor_id)
                 link_stat = 'https://STATS_URL/pl/' + city.replace(" ","")
-                link_xpaths = "dummy--%d--pl_json" % (sensor_id)
+                link_xpaths = []
                 country = 'pl';
                 gps = '';
                 sensor_type = 'hourly';
                 substances = []
                 for substance in sensor['values']:
-                    substances.append(substance.lower().replace('.',''))
+                    if substance.lower().replace('.','') in all_substances:
+                        substance_name = substance.lower().replace('.','')
+                        substances.append(substance_name)
+                        link_xpaths.append("%s--%d--pl_json" % (substance_name,sensor_id))
 
                 # Insert the sensor into the db
-                line = "'%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'" % (name, link_src, link_web, link_stat, link_xpaths, country, city, gps, sensor_type, substances)
+                line = "'%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'" % (name, link_src, link_web, link_stat, ";".join(link_xpaths), country, city, gps, sensor_type, " ".join(substances))
                 import_cmd = "%s/add-sensor.py %s" % (DATA_DIR, line)
                 import_args = shlex.split(import_cmd)
                 ### run the import
@@ -121,11 +128,11 @@ class SensorSpider(scrapy.Spider):
                 except:
                     print "Couldnt run %s/add-sensor.py %s" % (DATA_DIR, line)
 
-        # get detailed data for 612
-        #headers = {'_csrf_token': self.csrf,}
-        #post_data = {'days': '1', 'stationId': '612',}
-        #print "------ SCRAPING SENSOR %d WITH CSRF %s" % (612, self.csrf)
-        #yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_single_sensor)
+                # now get historical data (starting from 00:00 1.3.2020)
+                #headers = {'_csrf_token': self.csrf,}
+                #post_data = {'days': '30', 'stationId': sensor_id,}
+                #print "------ SCRAPING SENSOR %d WITH CSRF %s" % (sensor_id, self.csrf)
+                #yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_single_sensor)
 
 
     def parse_single_sensor(self, response):

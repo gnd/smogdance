@@ -12,7 +12,7 @@
    - creates or updates a mrtg config for the sensor and its substances
    - updates mrtg index for the given city and substances
 
-   gnd, 2017 - 2018
+   gnd, 2017 - 2020
 """
 
 import os
@@ -60,7 +60,7 @@ link_web = sys.argv[3]
 link_stat = sys.argv[4]
 link_xpaths = sys.argv[5]
 country = sys.argv[6]
-city = sys.argv[7]
+city = strip_accents(unicode(sys.argv[7]))
 gps = db.escape_string(sys.argv[8])
 type = sys.argv[9]
 substances = sys.argv[10]

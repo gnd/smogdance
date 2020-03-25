@@ -29,6 +29,11 @@ def fill_spider_template(TEMP_DIR, template, name, link_src, link_xpaths):
             tmp = "        xpath = \"%s\"\n" % (xpath)
             tmp += "        %s = j[\"data\"][xpath][\"value\"] if ((j[\"data\"] != {}) and (\"value\" in j[\"data\"][xpath])) else 'None'\n" % (substance)
             outputs += tmp
+        elif (modifier == 'pl_json'):
+            # filter(lambda x: x['stationId'] == 9175, data)[0]['values']['NO2']
+            station_id = xpath
+            tmp = "        %s = filter(lambda x: x['stationId'] == %s, data)[0]['values']['%s']\n" % (substance, station_id, substance.replace('pm25', 'pm2.5').upper())
+            outputs += tmp
         elif (modifier == 'cz_chmi'):
             sensor_uid = xpath.split(":")[0]
             substance_row = xpath.split(":")[1]
@@ -43,6 +48,9 @@ def fill_spider_template(TEMP_DIR, template, name, link_src, link_xpaths):
             outputs += tmp
     if (modifier == 'hu_json'):
         head = "        j = json.loads(json.loads(response.text))\n"
+        outputs = head + outputs
+    if (modifier == 'pl_json'):
+        head = "        data = json.loads(response.text)\n"
         outputs = head + outputs
     tmp = ""
     for substance in substances:

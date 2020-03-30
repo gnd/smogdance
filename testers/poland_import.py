@@ -105,7 +105,7 @@ class SensorSpider(scrapy.Spider):
         decrypted_data = json.loads(decrypted)
 
         self.sensors = []
-        for sensor in decrypted_data[0:2]:
+        for sensor in decrypted_data:
             if sensor['valid']:
 
                 # Get sensor data

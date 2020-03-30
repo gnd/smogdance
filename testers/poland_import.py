@@ -105,7 +105,7 @@ class SensorSpider(scrapy.Spider):
         decrypted_data = json.loads(decrypted)
 
         self.sensors = []
-        for sensor in decrypted_data:
+        for sensor in decrypted_data[0:2]:
             if sensor['valid']:
 
                 # Get sensor data
@@ -159,7 +159,7 @@ class SensorSpider(scrapy.Spider):
         decrypted = decrypt(data, self.csrf)
         decrypted_data = json.loads(decrypted)
 
-        print "Fetching data for sensor_id: %s" % sensor_id
+        print "Scraping data for GIOS sensor id: %s" % sensor_id
         for substance_data in decrypted_data['chartElements']:
             substance_name = substance_data['key'].lower().replace('.','')
             if (substance_name in all_substances):
@@ -172,15 +172,21 @@ class SensorSpider(scrapy.Spider):
                         data_array[substance_time] = {}
                     data_array[substance_time][substance_name] = str(substance_value)
 
-        print "Storing data for sensor_id: %s" % sensor_id
+        query = "SELECT id FROM %s WHERE link_xpaths like '%%--%s--pl%%'" % (DB_TABLE, sensor_id)
+        cur.execute(query)
+        row = cur.fetchone()
+        sensor_db_id = row[0]
+        print "GIOS sensor %s has smog.dance id %s" % (sensor_id, sensor_db_id)
+
+        print "Storing data for GIOS id %s under smog.dance id %s" % (sensor_id, sensor_db_id)
+        print data_array
         for timestamp in data_array:
             substances = ", ".join(data_array[timestamp].keys())
             values = ", ".join(data_array[timestamp].values())
             # last month storage
-            query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE_MONTH, substances, sensor_id, timestamp, values)
-            #print query
+            query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE_MONTH, substances, sensor_db_id, timestamp, values)
             cur.execute(query)
             # long term storage
-            query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE, substances, sensor_id, timestamp, values)
-            cur.execute(query)
+            #query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE, substances, sensor_db_id, timestamp, values)
+            #cur.execute(query)
             db.commit()

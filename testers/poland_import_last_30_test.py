@@ -6,7 +6,7 @@ import re
 import sys
 reload(sys)
 import json
-import time
+from datetime import datetime
 sys.setdefaultencoding('utf-8')
 import scrapy
 import base64
@@ -77,14 +77,11 @@ class SensorSpider(scrapy.Spider):
     def parse_aqi(self, response):
         data = re.search('<a id="txt" tabindex="-1"></a>\r\n(.*)\r\n', response.text).group(1)
         decrypted = decrypt(data, self.csrf)
-        #decrypted_data = json.loads(decrypted)
-        #print decrypted_data[162]['stationId']
-        #print decrypted_data[162]['values']
 
         # get detailed data for 612
         headers = {'_csrf_token': self.csrf,}
-        post_data = {'days': '1', 'stationId': '612',}
-        print "------ SCRAPING SENSOR %d WITH CSRF %s" % (612, self.csrf)
+        post_data = {'days': '3', 'stationId': '612',}
+        print "------ SCRAPING SENSOR %d WITH CSRF %s" % (int(self.sensor_id), self.csrf)
         yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_data)
 
 
@@ -92,10 +89,11 @@ class SensorSpider(scrapy.Spider):
         data = re.search('<a id="txt" tabindex="-1"></a>\r\n(.*)\r\n', response.text).group(1)
         decrypted = decrypt(data, self.csrf)
         print decrypted
-        #decrypted_data = json.loads(decrypted)
+        decrypted_data = json.loads(decrypted)
         # TODO error handling - if sensor {u'errorMessage': None, u'isError': False,
-        #for substance_data in decrypted_data['chartElements']:
-        #    substance_name = substance_data['key']
-            #substance_time = time.ctime(substance_data['key']['values'][0][0]/1000)
-        #    substance_value = substance_data['values'][0][1]
-        #    print "%s: %s" % (substance_name, substance_value),
+        for substance_data in decrypted_data['chartElements']:
+            substance_name = substance_data['key'].lower().replace('.','')
+            for substance_datapoint in substance_data['values']:
+                substance_time = datetime.fromtimestamp(substance_datapoint[0]/1000).strftime("%Y-%m-%d %H:%M:%S")
+                substance_value = substance_datapoint[1]
+                print "%s %s %s" % (substance_name, substance_time, substance_value)

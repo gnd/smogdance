@@ -6,15 +6,16 @@ import re
 import sys
 reload(sys)
 import json
-import time
 import shlex
 sys.setdefaultencoding('utf-8')
 import scrapy
 import base64
 import hashlib
+import MySQLdb
 import subprocess
 import unicodedata
 import ConfigParser
+from datetime import datetime
 from Crypto.Cipher import AES
 
 # # #
@@ -42,6 +43,18 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(settings_file))
 DATA_DIR = config.get('globals', 'DATA_DIR')
 
+### connect to the db
+DB_HOST = config.get('database', 'DB_HOST')
+DB_USER = config.get('database', 'DB_USER')
+DB_PASS = config.get('database', 'DB_PASS')
+DB_NAME = config.get('database', 'DB_NAME')
+DB_TABLE = config.get('database', 'DB_TABLE')
+DATA_TABLE = config.get('database', 'DATA_TABLE')
+DATA_TABLE_TEMP = config.get('database', 'DATA_TABLE_TEMP')
+DATA_TABLE_MONTH = config.get('database', 'DATA_TABLE_MONTH')
+db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, use_unicode=True, charset="utf8")
+cur = db.cursor()
+
 all_substances = ["co","no2","o3","pm10","pm25","so2"]
 
 # decryption settings from http://powietrze.gios.gov.pl/pjp/assets-0.0.31/js/chart.js
@@ -65,6 +78,7 @@ def decrypt(data, passphrase):
 class SensorSpider(scrapy.Spider):
     name = "PL test"
     csrf = ""
+    sensors = []
     start_url = 'http://powietrze.gios.gov.pl/pjp/current'
     data_url = 'http://powietrze.gios.gov.pl/pjp/current/get_data_chart'
     aqi_url = 'http://powietrze.gios.gov.pl/pjp/current/getAQIDetailsList'
@@ -90,12 +104,14 @@ class SensorSpider(scrapy.Spider):
         decrypted = decrypt(data, self.csrf)
         decrypted_data = json.loads(decrypted)
 
-        for sensor in decrypted_data:
+        self.sensors = []
+        for sensor in decrypted_data[0:2]:
             if sensor['valid']:
 
                 # Get sensor data
                 sensor_data = []
                 sensor_id = sensor['stationId']
+                self.sensors.append(sensor_id)
                 city = sensor['stationName'].split(',')[0].strip().lower().replace('ł','l')
                 name = sensor['stationName'].split(',')[1].strip().lower().replace('ł','l')
                 if name == "":
@@ -128,20 +144,42 @@ class SensorSpider(scrapy.Spider):
                 except:
                     print "Couldnt run %s/add-sensor.py %s" % (DATA_DIR, line)
 
-                # now get historical data (starting from 00:00 1.3.2020)
-                #headers = {'_csrf_token': self.csrf,}
-                #post_data = {'days': '30', 'stationId': sensor_id,}
-                #print "------ SCRAPING SENSOR %d WITH CSRF %s" % (sensor_id, self.csrf)
-                #yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_single_sensor)
+        for sensor_id in self.sensors:
+            # now get historical data (starting from 00:00 1.3.2020)
+            headers = {'_csrf_token': self.csrf,}
+            post_data = {'days': '3', 'stationId': str(sensor_id),}
+            print "------ SCRAPING SENSOR %d WITH CSRF %s" % (sensor_id, self.csrf)
+            yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_single_sensor, meta={'sensor_id': str(sensor_id)})
 
 
     def parse_single_sensor(self, response):
+        data_array = {}
+        sensor_id = response.meta.get('sensor_id')
         data = re.search('<a id="txt" tabindex="-1"></a>\r\n(.*)\r\n', response.text).group(1)
         decrypted = decrypt(data, self.csrf)
         decrypted_data = json.loads(decrypted)
-        # TODO error handling - if sensor {u'errorMessage': None, u'isError': False,
+
+        print "Fetching data for sensor_id: %s" % sensor_id
         for substance_data in decrypted_data['chartElements']:
-            substance_name = substance_data['key']
-            #substance_time = time.ctime(substance_data['key']['values'][0][0]/1000)
-            substance_value = substance_data['values'][0][1]
-            print "%s: %s" % (substance_name, substance_value),
+            substance_name = substance_data['key'].lower().replace('.','')
+            for substance_datapoint in substance_data['values']:
+                substance_time = datetime.fromtimestamp(substance_datapoint[0]/1000).strftime("%Y-%m-%d %H:%M:%S")
+                substance_value = substance_datapoint[1]
+                if not substance_value:
+                    substance_value = "NULL"
+                if substance_time not in data_array:
+                    data_array[substance_time] = {}
+                data_array[substance_time][substance_name] = str(substance_value)
+
+        print "Storing data for sensor_id: %s" % sensor_id
+        for timestamp in data_array:
+            substances = ", ".join(data_array[timestamp].keys())
+            values = ", ".join(data_array[timestamp].values())
+            # last month storage
+            query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE_MONTH, substances, sensor_id, timestamp, values)
+            #print query
+            cur.execute(query)
+            # long term storage
+            query = "INSERT INTO %s (sensor_id, timestamp, %s) VALUES(%s, '%s', %s)" % (DATA_TABLE, substances, sensor_id, timestamp, values)
+            cur.execute(query)
+            db.commit()

@@ -162,14 +162,15 @@ class SensorSpider(scrapy.Spider):
         print "Fetching data for sensor_id: %s" % sensor_id
         for substance_data in decrypted_data['chartElements']:
             substance_name = substance_data['key'].lower().replace('.','')
-            for substance_datapoint in substance_data['values']:
-                substance_time = datetime.fromtimestamp(substance_datapoint[0]/1000).strftime("%Y-%m-%d %H:%M:%S")
-                substance_value = substance_datapoint[1]
-                if not substance_value:
-                    substance_value = "NULL"
-                if substance_time not in data_array:
-                    data_array[substance_time] = {}
-                data_array[substance_time][substance_name] = str(substance_value)
+            if (substance_name in all_substances):
+                for substance_datapoint in substance_data['values']:
+                    substance_time = datetime.fromtimestamp(substance_datapoint[0]/1000).strftime("%Y-%m-%d %H:%M:%S")
+                    substance_value = substance_datapoint[1]
+                    if not substance_value:
+                        substance_value = "NULL"
+                    if substance_time not in data_array:
+                        data_array[substance_time] = {}
+                    data_array[substance_time][substance_name] = str(substance_value)
 
         print "Storing data for sensor_id: %s" % sensor_id
         for timestamp in data_array:

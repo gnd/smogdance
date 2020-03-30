@@ -105,7 +105,7 @@ class SensorSpider(scrapy.Spider):
         decrypted_data = json.loads(decrypted)
 
         self.sensors = []
-        for sensor in decrypted_data[0:2]:
+        for sensor in decrypted_data:
             if sensor['valid']:
 
                 # Get sensor data
@@ -147,7 +147,7 @@ class SensorSpider(scrapy.Spider):
         for sensor_id in self.sensors:
             # now get historical data (starting from 00:00 1.3.2020)
             headers = {'_csrf_token': self.csrf,}
-            post_data = {'days': '3', 'stationId': str(sensor_id),}
+            post_data = {'days': '30', 'stationId': str(sensor_id),}
             print "------ SCRAPING SENSOR %d WITH CSRF %s" % (sensor_id, self.csrf)
             yield scrapy.FormRequest(self.data_url, headers=headers, formdata=post_data, callback=self.parse_single_sensor, meta={'sensor_id': str(sensor_id)})
 

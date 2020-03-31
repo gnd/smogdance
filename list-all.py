@@ -10,7 +10,7 @@
     collected sensors and their current ait quality readings trying to color code
     the amounts of substances detected according to the EC's air quality standards.
 
-    gnd, 2017 - 2018
+    gnd, 2017 - 2020
 """
 
 import os
@@ -38,7 +38,6 @@ thresholds['pm25'] = pm25_thresholds
 thresholds['co'] = co_thresholds
 thresholds['no2'] = no2_thresholds
 
-
 ### connect to the db
 DB_HOST = config.get('database', 'DB_HOST')
 DB_USER = config.get('database', 'DB_USER')
@@ -48,6 +47,9 @@ DB_TABLE = config.get('database', 'DB_TABLE')
 DATA_TABLE = config.get('database', 'DATA_TABLE')
 db = MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, use_unicode=True, charset="utf8")
 cur = db.cursor()
+
+### Import Smog functions
+from smog_functions import *
 
 #####
 ##### List all sensors (this might get very big very soon)
@@ -84,7 +86,7 @@ for country in countries:
     #//TODO - rewrite this with poll-city instead
     for res in cur.fetchall():
         city = res[0]
-        link = res[1]
+        link = strip_accents(res[1])
         query = "SELECT DISTINCT id, name from %s WHERE city = '%s' order by id" % (DB_TABLE, city)
         cur.execute(query)
         city_co = 0

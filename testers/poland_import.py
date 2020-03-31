@@ -179,7 +179,7 @@ class SensorSpider(scrapy.Spider):
         print "GIOS sensor %s has smog.dance id %s" % (sensor_id, sensor_db_id)
 
         print "Storing data for GIOS id %s under smog.dance id %s" % (sensor_id, sensor_db_id)
-        print data_array
+        #print data_array
         for timestamp in data_array:
             substances = ", ".join(data_array[timestamp].keys())
             values = ", ".join(data_array[timestamp].values())
